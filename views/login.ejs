@@ -1,15 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>MarmitaTech - Login</title>
-    <style>body { font-family: sans-serif; display: flex; justify-content: center; margin-top: 100px; background: #f4f4f4; }</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isadora's Restaurant - Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #ff4da6, #8e2de2);
+    }
+
+    .login-container {
+        background: white;
+        padding: 40px;
+        width: 320px;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        text-align: center;
+    }
+
+    .logo {
+        font-size: 22px;
+        font-weight: 600;
+        color: #8e2de2;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        font-size: 14px;
+        color: #999;
+        margin-bottom: 25px;
+    }
+
+    .input-group {
+        text-align: left;
+        margin-bottom: 15px;
+    }
+
+    .input-group label {
+        font-size: 13px;
+        color: #555;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    .input-group input:focus {
+        border-color: #8e2de2;
+        box-shadow: 0 0 8px rgba(142,45,226,0.3);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ff4da6, #8e2de2);
+        color: white;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 10px;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .footer-text {
+        margin-top: 15px;
+        font-size: 12px;
+        color: #aaa;
+    }
+</style>
 </head>
+
 <body>
-    <form action="/login" method="POST" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <h2>🥪 MarmitaTech Login</h2>
-        <input type="text" name="username" placeholder="Usuário" required><br><br>
-        <input type="password" name="password" placeholder="Senha" required><br><br>
-        <button type="submit">Entrar</button>
+
+<div class="login-container">
+    <div class="logo">🍽️ Isadora's Restaurant</div>
+    <div class="subtitle">Acesse sua conta</div>
+
+    <form action="/login" method="POST">
+
+        <div class="input-group">
+            <label for="username">Usuário</label>
+            <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+        </div>
+
+        <div class="input-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+        </div>
+
+        <button type="submit" class="btn">Entrar</button>
+
     </form>
+
+    <div class="footer-text">
+        © 2026 Isadora's Restaurant
+    </div>
+</div>
+
 </body>
 </html>
