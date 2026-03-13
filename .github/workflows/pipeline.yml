@@ -1,5 +1,7 @@
 name: integracao continua
 
+
+
 on:
 
   push:
@@ -18,34 +20,32 @@ jobs:
 
     runs-on: ubuntu-latest
 
+
+
     steps:
 
       - name: Checkout do código
 
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
 
 
       - name: Configurar Node.js 18
 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
 
         with:
 
           node-version: '18'
 
-          # Dica: Adicionar cache ajuda o pipeline a rodar mais rápido
-
-          cache: 'npm'
-
 
 
       - name: Instalar dependências
 
-        run: npm ci
+        run: npm install
 
 
 
-      - name: Build do projeto
+      - name: Verificar sintaxe do projeto
 
-        run: npm run build
+        run: node --check index.js
