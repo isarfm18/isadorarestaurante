@@ -1,7 +1,7 @@
 {
-  "name": "marmitatech-pro",
+  "name": "isadorarestaurante",
   "version": "1.0.0",
-  "description": "Sistema de Gestão de Marmitas - MySQL Version",
+  "description": "Sistema de Gestão Isadora's Restaurant - MySQL Version",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
