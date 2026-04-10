@@ -39,14 +39,18 @@ app.get('/', (req, res) => res.render('login'));
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-        if (rows.length > 0) res.redirect('/dashboard');
-        else res.send('<h1>Login Inválido</h1><a href="/">Voltar</a>');
+        const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        if (rows.length > 0) {
+            const user = rows[0];
+            // O segredo do DevOps: validar a segurança via código
+            const match = await bcrypt.compare(password, user.password);
+            if (match) return res.redirect('/dashboard');
+        }
+        res.send('<h1>Login Inválido</h1><a href="/">Voltar</a>');
     } catch (err) {
-        res.status(500).send("Erro no banco.");
+        res.status(500).send("Erro no servidor.");
     }
 });
-
 app.get('/dashboard', async (req, res) => {
     const [items] = await pool.query('SELECT * FROM items');
     const [orders] = await pool.query('SELECT * FROM orders');
