@@ -2,9 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
+<<<<<<< HEAD
 const bcrypt = require('bcrypt');
 
+=======
+>>>>>>> 9b23f602fa317018eb5fee1270f319b7752c0b59
 const app = express();
+const bcrypt = require('bcrypt');
 
 const dbConfig = {
     host: process.env.DB_HOST || 'db',
@@ -40,6 +44,7 @@ app.get('/', (req, res) => res.render('login'));
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
+<<<<<<< HEAD
 
         const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
 
@@ -60,15 +65,30 @@ app.post('/login', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send("Erro no processamento do login.");
+=======
+        const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        if (rows.length > 0) {
+            const user = rows[0];
+            // O segredo do DevOps: validar a segurança via código
+            const match = await bcrypt.compare(password, user.password);
+            if (match) return res.redirect('/dashboard');
+        }
+        res.send('<h1>Login Inválido</h1><a href="/">Voltar</a>');
+    } catch (err) {
+        res.status(500).send("Erro no servidor.");
+>>>>>>> 9b23f602fa317018eb5fee1270f319b7752c0b59
     }
 });
-
 app.get('/dashboard', async (req, res) => {
     const [items] = await pool.query('SELECT * FROM items');
     const [orders] = await pool.query('SELECT * FROM orders');
     res.render('dashboard', { items, orders });
 });
 
+app.use(express.static('public'));
+
 connectWithRetry().then(() => {
-    app.listen(3000, () => console.log('🚀 MARMITATECH PRO ONLINE NA PORTA 3000'));
+    app.listen(3000, () => {
+        console.log('🚀 ISADORA RESTAURANT ONLINE NA PORTA 3000');
+    });
 });
