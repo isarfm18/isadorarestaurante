@@ -1,23 +1,18 @@
 {
-  "name": "marmitatech-pro",
+  "name": "isadorarestaurante",
   "version": "1.0.0",
-  "description": "Sistema de Gestão de Marmitas - MySQL Version",
+  "description": "Sistema de Gestão Isadora's Restaurant - MySQL Version",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "lint": "node --check index.js",
     "build": "echo Build realizado com sucesso"
   },
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "body-parser": "1.18.3",
-    "ejs": "3.1.6",
-<<<<<<< HEAD
-    "express": "4.16.0",
-    "mysql2": "3.9.1"
-=======
-    "body-parser": "1.18.3",
-    "bcrypt": "^5.1.1"
->>>>>>> 9b23f602fa317018eb5fee1270f319b7752c0b59
-  }
+"dependencies": {
+  "express": "4.16.0",
+  "mysql2": "3.9.1",
+  "ejs": "3.1.6",
+  "body-parser": "1.18.3",
+  "bcryptjs": "^2.4.3" 
+}
 }
