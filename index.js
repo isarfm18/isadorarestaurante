@@ -57,6 +57,8 @@ app.get('/dashboard', async (req, res) => {
     res.render('dashboard', { items, orders });
 });
 
+app.use(express.static('public'));
+
 connectWithRetry().then(() => {
     app.listen(3000, () => {
         console.log('🚀 ISADORA RESTAURANT ONLINE NA PORTA 3000');
