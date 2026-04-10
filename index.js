@@ -2,8 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
-
 const app = express();
+const bcrypt = require('bcrypt');
 
 const dbConfig = {
     host: process.env.DB_HOST || 'db',
