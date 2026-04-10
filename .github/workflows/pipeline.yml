@@ -86,7 +86,6 @@ jobs:
   job_sonar:
     needs: estagio_lint
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -103,9 +102,6 @@ jobs:
           sonar.sourceEncoding=UTF-8
           sonar.exclusions=node_modules/**,.git/**,.github/**,coverage/**,dist/**
           EOF
-
-      - name: Exibir configuração do Sonar
-        run: cat sonar-project.properties
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
