@@ -58,5 +58,7 @@ app.get('/dashboard', async (req, res) => {
 });
 
 connectWithRetry().then(() => {
-    app.listen(3000, () => console.log('🚀 MARMITATECH PRO ONLINE NA PORTA 3000'));
+    app.listen(3000, () => {
+        console.log('🚀 ISADORA RESTAURANT ONLINE NA PORTA 3000');
+    });
 });
