@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 const app = express();
 
@@ -39,11 +40,26 @@ app.get('/', (req, res) => res.render('login'));
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-        if (rows.length > 0) res.redirect('/dashboard');
-        else res.send('<h1>Login Inválido</h1><a href="/">Voltar</a>');
+
+        const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+
+        if (rows.length > 0) {
+            const user = rows[0];
+
+
+            const match = await bcrypt.compare(password, user.password);
+
+            if (match) {
+                res.redirect('/dashboard');
+            } else {
+                res.send('<h1>Senha Inválida</h1><a href="/">Voltar</a>');
+            }
+        } else {
+            res.send('<h1>Usuário não encontrado</h1><a href="/">Voltar</a>');
+        }
     } catch (err) {
-        res.status(500).send("Erro no banco.");
+        console.error(err);
+        res.status(500).send("Erro no processamento do login.");
     }
 });
 
