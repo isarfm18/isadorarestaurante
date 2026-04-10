@@ -4,7 +4,7 @@ services:
     container_name: isadorarestaurante-db
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: isadoradb
+      MYSQL_DATABASE: marmitadb
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     ports:
@@ -21,13 +21,13 @@ services:
     build: .
     container_name: isadorarestaurante-app
     ports:
-      - "3001:3000"  # Acesse http://localhost:3001 no navegador
+      - "3001:3000"
     environment:
       DB_HOST: db
-      DB_PORT: 3306  # <--- AQUI ESTAVA O ERRO (Deve ser 3306)
+      DB_PORT: 3306  # <--- ANTES ESTAVA 3307, AGORA ESTÁ CORRETO
       DB_USER: user
       DB_PASS: password
-      DB_NAME: isadoradb
+      DB_NAME: marmitadb
     depends_on:
       db:
         condition: service_healthy
