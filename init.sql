@@ -13,7 +13,8 @@ INSERT INTO users (username, password) VALUES ('isadora', '$2a$10$EPf9X7A8ytYmGv
 CREATE TABLE IF NOT EXISTS items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    category VARCHAR(50)
+    category VARCHAR(50),
+    price DECIMAL(10,2) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS orders (

@@ -65,6 +65,48 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).send('Usuário e senha são obrigatórios.');
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]);
+        return res.status(201).send('Usuário cadastrado com sucesso.');
+    } catch (err) {
+        if (err && err.code === 'ER_DUP_ENTRY') {
+            return res.status(409).send('Usuário já existe.');
+        }
+        console.error(err);
+        return res.status(500).send('Erro ao cadastrar usuário.');
+    }
+});
+
+app.post('/add-item', async (req, res) => {
+    const { name, category, price } = req.body;
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedCategory = typeof category === 'string' ? category.trim() : '';
+    const parsedPrice = Number(price);
+
+    if (!normalizedName || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+        return res.status(400).send('Dados inválidos: nome obrigatório e preço deve ser número positivo.');
+    }
+
+    try {
+        await pool.query(
+            'INSERT INTO items (name, category, price) VALUES (?, ?, ?)',
+            [normalizedName, normalizedCategory || null, parsedPrice]
+        );
+        return res.redirect('/dashboard');
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Erro ao cadastrar item.');
+    }
+});
+
 app.get('/dashboard', async (req, res) => {
     try {
         const [items] = await pool.query('SELECT * FROM items');
