@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
-const bcrypt = require('bcryptjs'); // Mantido bcryptjs para compatibilidade de rede
+const bcrypt = require('bcryptjs'); 
 
 const app = express();
 
@@ -35,7 +35,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Servir arquivos estáticos (CSS, Imagens)
+
 app.use(express.static('public'));
 
 app.get('/', (req, res) => res.render('login'));
@@ -48,7 +48,7 @@ app.post('/login', async (req, res) => {
         if (rows.length > 0) {
             const user = rows[0];
             
-            // Comparação de senha usando apenas o hash seguro
+   
             const match = await bcrypt.compare(password, user.password);
 
             if (match) {

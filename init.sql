@@ -1,4 +1,4 @@
--- Garante que começaremos com a tabela limpa
+
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
