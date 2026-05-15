@@ -86,6 +86,7 @@ jobs:
   job_sonar:
     needs: estagio_lint
     runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
