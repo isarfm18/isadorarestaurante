@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 
 const app = express();
 
@@ -42,13 +42,18 @@ app.get('/', (req, res) => res.render('login'));
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).send('Usuário e senha são obrigatórios.');
+    }
+
     try {
         const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
 
         if (rows.length > 0) {
             const user = rows[0];
-            
-   
+
+
             const match = await bcrypt.compare(password, user.password);
 
             if (match) {
@@ -107,10 +112,54 @@ app.post('/add-item', async (req, res) => {
     }
 });
 
+app.post('/orders', async (req, res) => {
+    const { customer_name, item_id } = req.body;
+    const normalizedName = typeof customer_name === 'string' ? customer_name.trim() : '';
+    const parsedItemId = Number(item_id);
+
+    if (!normalizedName || !Number.isInteger(parsedItemId) || parsedItemId <= 0) {
+        return res.status(400).send('Dados inválidos: nome do cliente e marmita são obrigatórios.');
+    }
+
+    try {
+        await pool.query(
+            'INSERT INTO orders (customer_name, item_id, status) VALUES (?, ?, ?)',
+            [normalizedName, parsedItemId, 'Aberto']
+        );
+        return res.redirect('/dashboard');
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Erro ao registrar pedido.');
+    }
+});
+
+app.post('/update-order-status', async (req, res) => {
+    const { order_id, new_status } = req.body;
+
+    if (!order_id || !new_status) {
+        return res.status(400).send('ID do pedido e novo status são obrigatórios.');
+    }
+
+    try {
+        await pool.query(
+            'UPDATE orders SET status = ? WHERE id = ?',
+            [new_status, Number(order_id)]
+        );
+        return res.redirect('/dashboard');
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Erro ao atualizar status do pedido.');
+    }
+});
+
 app.get('/dashboard', async (req, res) => {
     try {
         const [items] = await pool.query('SELECT * FROM items');
-        const [orders] = await pool.query('SELECT * FROM orders');
+        const [orders] = await pool.query(`
+            SELECT orders.*, items.name AS item_name 
+            FROM orders 
+            LEFT JOIN items ON orders.item_id = items.id
+        `);
         res.render('dashboard', { items, orders });
     } catch (err) {
         res.status(500).send("Erro ao carregar o dashboard.");
@@ -119,6 +168,6 @@ app.get('/dashboard', async (req, res) => {
 
 connectWithRetry().then(() => {
     app.listen(3000, () => {
-        console.log('🚀 ISADORA RESTAURANT ONLINE NA PORTA 3000');
+        console.log('ISADORA RESTAURANT ONLINE NA PORTA 3000');
     });
 });
