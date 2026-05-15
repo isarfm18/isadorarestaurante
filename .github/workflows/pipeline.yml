@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configurar Node.js 18
         uses: actions/setup-node@v6
@@ -38,7 +38,7 @@ jobs:
     needs: estagio_build
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configurar Node.js 18
         uses: actions/setup-node@v6
@@ -89,7 +89,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
