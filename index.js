@@ -166,6 +166,18 @@ app.get('/dashboard', async (req, res) => {
     }
 });
 
+app.get('/health', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(500).json({ status: 'unhealthy', reason: 'db_pool_not_initialized' });
+        }
+        await pool.query('SELECT 1');
+        return res.json({ status: 'healthy' });
+    } catch (err) {
+        return res.status(500).json({ status: 'unhealthy', error: err.message });
+    }
+});
+
 connectWithRetry().then(() => {
     app.listen(3000, () => {
         console.log('ISADORA RESTAURANT ONLINE NA PORTA 3000');
