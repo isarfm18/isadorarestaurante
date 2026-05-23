@@ -21,7 +21,7 @@ services:
     image: isarfm18/isadorarestaurante:latest
     container_name: isadorarestaurante-app
     ports:
-      - "8087:8087"  
+      - "8087:3000"  
     environment:
       DB_HOST: db
       DB_PORT: 3306  
