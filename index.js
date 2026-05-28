@@ -8,6 +8,7 @@ const app = express();
 
 const dbConfig = {
     host: process.env.DB_HOST || 'db',
+    port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'user',
     password: process.env.DB_PASS || 'password',
     database: process.env.DB_NAME || 'isadoradb'
@@ -31,11 +32,10 @@ async function connectWithRetry() {
     process.exit(1);
 }
 
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
-
 app.use(express.static('public'));
 
 app.get('/', (req, res) => res.render('login'));
@@ -91,9 +91,10 @@ app.post('/register', async (req, res) => {
 });
 
 app.post('/add-item', async (req, res) => {
-    const { name, category, price } = req.body;
+    const { name, category, price, description } = req.body;
     const normalizedName = typeof name === 'string' ? name.trim() : '';
     const normalizedCategory = typeof category === 'string' ? category.trim() : '';
+    const normalizedDesc = typeof description === 'string' ? description.trim() : '';
     const parsedPrice = Number(price);
 
     if (!normalizedName || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
@@ -102,8 +103,8 @@ app.post('/add-item', async (req, res) => {
 
     try {
         await pool.query(
-            'INSERT INTO items (name, category, price) VALUES (?, ?, ?)',
-            [normalizedName, normalizedCategory || null, parsedPrice]
+            'INSERT INTO items (name, category, price, description) VALUES (?, ?, ?, ?)',
+            [normalizedName, normalizedCategory || null, parsedPrice, normalizedDesc || null]
         );
         return res.redirect('/dashboard?toast=Item_Cadastrado');
     } catch (err) {
@@ -113,19 +114,38 @@ app.post('/add-item', async (req, res) => {
 });
 
 app.post('/orders', async (req, res) => {
-    const { customer_name, item_id } = req.body;
+    const { customer_name, item_ids } = req.body;
     const normalizedName = typeof customer_name === 'string' ? customer_name.trim() : '';
-    const parsedItemId = Number(item_id);
+    
+    let ids = [];
+    if (Array.isArray(item_ids)) ids = item_ids.map(Number);
+    else if (item_ids) ids = [Number(item_ids)];
 
-    if (!normalizedName || !Number.isInteger(parsedItemId) || parsedItemId <= 0) {
-        return res.status(400).send('Dados inválidos: nome do cliente e marmita são obrigatórios.');
+    if (!normalizedName || ids.length === 0) {
+        return res.status(400).send('Dados inválidos: nome do cliente e marmitas são obrigatórios.');
     }
 
     try {
-        await pool.query(
-            'INSERT INTO orders (customer_name, item_id, status) VALUES (?, ?, ?)',
-            [normalizedName, parsedItemId, 'Aberto']
+        const [items] = await pool.query('SELECT id, price FROM items WHERE id IN (?)', [ids]);
+        let total = 0;
+        ids.forEach(id => {
+            const item = items.find(i => i.id === id);
+            if (item) total += Number(item.price);
+        });
+
+        const [orderResult] = await pool.query(
+            'INSERT INTO orders (customer_name, total, status) VALUES (?, ?, ?)',
+            [normalizedName, total, 'Aberto']
         );
+        const orderId = orderResult.insertId;
+
+        for (const id of ids) {
+            await pool.query(
+                'INSERT INTO order_items (order_id, item_id, quantity) VALUES (?, ?, ?)',
+                [orderId, id, 1]
+            );
+        }
+
         return res.redirect('/dashboard?toast=Pedido_Registrado');
     } catch (err) {
         console.error(err);
@@ -137,7 +157,7 @@ app.post('/update-order-status', async (req, res) => {
     const { order_id, new_status } = req.body;
 
     if (!order_id || !new_status) {
-        return res.status(400).send('ID do pedido e novo status são obrigatórios.');
+        return res.status(400).json({ error: 'ID do pedido e novo status são obrigatórios.' });
     }
 
     try {
@@ -145,23 +165,51 @@ app.post('/update-order-status', async (req, res) => {
             'UPDATE orders SET status = ? WHERE id = ?',
             [new_status, Number(order_id)]
         );
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ success: true });
+        }
         return res.redirect('/dashboard?toast=Status_Atualizado');
     } catch (err) {
         console.error(err);
-        return res.status(500).send('Erro ao atualizar status do pedido.');
+        return res.status(500).json({ error: 'Erro ao atualizar status do pedido.' });
+    }
+});
+
+app.post('/cancel-order', async (req, res) => {
+    const { order_id } = req.body;
+    try {
+        await pool.query('UPDATE orders SET status = ? WHERE id = ?', ['Cancelado', Number(order_id)]);
+        return res.redirect('/dashboard?toast=Pedido_Cancelado');
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Erro ao cancelar pedido.');
     }
 });
 
 app.get('/dashboard', async (req, res) => {
     try {
         const [items] = await pool.query('SELECT * FROM items');
-        const [orders] = await pool.query(`
-            SELECT orders.*, items.name AS item_name 
-            FROM orders 
-            LEFT JOIN items ON orders.item_id = items.id
+        const [orders] = await pool.query("SELECT * FROM orders WHERE status != 'Cancelado' ORDER BY created_at DESC");
+        const [orderItems] = await pool.query(`
+            SELECT oi.order_id, i.name AS item_name, i.price 
+            FROM order_items oi 
+            JOIN items i ON oi.item_id = i.id
         `);
-        res.render('dashboard', { items, orders });
+
+        orders.forEach(o => {
+            o.itemsList = orderItems.filter(oi => oi.order_id === o.id);
+        });
+
+        const [faturamentoResult] = await pool.query(`
+            SELECT SUM(total) AS faturamento 
+            FROM orders 
+            WHERE DATE(created_at) = CURDATE() AND status != 'Cancelado'
+        `);
+        const faturamentoHoje = faturamentoResult[0].faturamento || 0;
+
+        res.render('dashboard', { items, orders, faturamentoHoje });
     } catch (err) {
+        console.error(err);
         res.status(500).send("Erro ao carregar o dashboard.");
     }
 });
@@ -169,15 +217,14 @@ app.get('/dashboard', async (req, res) => {
 app.get('/admin/export', async (req, res) => {
     try {
         const [orders] = await pool.query(`
-            SELECT orders.id, orders.customer_name, items.name AS item_name, items.price, orders.status, orders.created_at
+            SELECT orders.id, orders.customer_name, orders.total, orders.status, orders.created_at
             FROM orders 
-            LEFT JOIN items ON orders.item_id = items.id
         `);
 
-        let csv = 'ID,Cliente,Item,Valor,Status,Data\n';
+        let csv = 'ID,Cliente,Valor Total,Status,Data\n';
         orders.forEach(order => {
             const date = new Date(order.created_at).toISOString().split('T')[0];
-            csv += `${order.id},"${order.customer_name}","${order.item_name || ''}",${order.price || 0},${order.status},${date}\n`;
+            csv += `${order.id},"${order.customer_name}",${order.total},${order.status},${date}\n`;
         });
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -186,6 +233,31 @@ app.get('/admin/export', async (req, res) => {
     } catch (err) {
         console.error(err);
         return res.status(500).send('Erro ao exportar relatório.');
+    }
+});
+
+app.get('/faturamento', async (req, res) => {
+    try {
+        const [result] = await pool.query(`
+            SELECT SUM(items.price) AS total_hoje
+            FROM orders 
+            JOIN items ON orders.item_id = items.id
+            WHERE DATE(orders.created_at) = CURDATE()
+        `);
+        
+        const [orders_hoje] = await pool.query(`
+            SELECT orders.id, orders.customer_name, items.name AS item_name, items.price, orders.status, orders.created_at
+            FROM orders 
+            JOIN items ON orders.item_id = items.id
+            WHERE DATE(orders.created_at) = CURDATE()
+            ORDER BY orders.created_at DESC
+        `);
+
+        const total_hoje = result[0].total_hoje || 0;
+        res.render('faturamento', { total_hoje, orders_hoje });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Erro ao carregar faturamento.");
     }
 });
 

@@ -4,304 +4,129 @@
     <meta charset="UTF-8">
     <title>Isadora's Restaurant - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #2b0a3d, #3a0f4f, #4a145f);
-            color: #eee;
-            min-height: 100vh;
-            padding: 30px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            background: rgba(20, 5, 30, 0.95);
-            padding: 20px 30px;
-            border-radius: 18px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-        }
-
-        .header h1 {
-            color: #d16ba5;
-            font-weight: 600;
-        }
-
-        .grid-forms {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: rgba(20, 5, 30, 0.95);
-            padding: 25px;
-            border-radius: 18px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-        }
-
-        .card h3 {
-            color: #d16ba5;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #5a2a6c;
-            padding-bottom: 10px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 11px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            border: 1px solid #5a2a6c;
-            background-color: #2a0e3a;
-            color: #fff;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        input:focus, select:focus {
-            border-color: #a4508b;
-            box-shadow: 0 0 10px rgba(164, 80, 139, 0.5);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #7b2cbf, #a4508b);
-            color: white;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-
-        ul.item-list {
-            list-style: none;
-        }
-
-        ul.item-list li {
-            background-color: #2a0e3a;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 4px solid #a4508b;
-        }
-
-        /* KANBAN BOARD */
-        .kanban-board {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .kanban-col {
-            background: rgba(20, 5, 30, 0.95);
-            border-radius: 18px;
-            padding: 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-            min-height: 400px;
-        }
-
-        .kanban-col h3 {
-            color: #d16ba5;
-            text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #5a2a6c;
-            padding-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .kanban-card {
-            background-color: #2a0e3a;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border-left: 4px solid #a4508b;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .kanban-card strong {
-            display: block;
-            font-size: 15px;
-            color: #fff;
-            margin-bottom: 5px;
-        }
-
-        .kanban-card em {
-            font-size: 13px;
-            color: #bbb;
-            font-style: normal;
-        }
-
-        .kanban-form {
-            margin-top: 10px;
-        }
-
-        /* TOAST NOTIFICATION */
-        .toast {
-            visibility: hidden;
-            min-width: 250px;
-            margin-left: -125px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 8px;
-            padding: 16px;
-            position: fixed;
-            z-index: 1000;
-            left: 50%;
-            bottom: 30px;
-            font-size: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
-
-        .toast.show {
-            visibility: visible;
-            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
-        }
-
-        @-webkit-keyframes fadein {
-            from {bottom: 0; opacity: 0;} 
-            to {bottom: 30px; opacity: 1;}
-        }
-
-        @keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-
-        @-webkit-keyframes fadeout {
-            from {bottom: 30px; opacity: 1;} 
-            to {bottom: 0; opacity: 0;}
-        }
-
-        @keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-
-        /* RESPONSIVIDADE MOBILE */
-        @media (max-width: 768px) {
-            .grid-forms {
-                grid-template-columns: 1fr;
-            }
-            .kanban-board {
-                grid-template-columns: 1fr;
-            }
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            body {
-                padding: 15px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
     <div class="header">
         <h1>Painel Administrativo - Isadora's Restaurant</h1>
         <div>
-            <a href="/admin/export" class="btn" style="text-decoration: none; padding: 10px 15px; margin-right: 15px; font-size: 14px; display: inline-block;">📊 Baixar Relatório</a>
-            <a href="/" style="color: #bbb; text-decoration: none; font-weight: bold;">Sair</a>
+            <a href="/" style="color: var(--text-muted); text-decoration: none; font-weight: bold;">Sair</a>
         </div>
+    </div>
+
+    <div class="faturamento-card">
+        <div>
+            <h2 style="font-weight: 300; font-size: 18px;">Faturamento Hoje</h2>
+            <div class="value">R$ <%= Number(faturamentoHoje).toFixed(2).replace('.', ',') %></div>
+        </div>
+        <a href="/admin/export" class="btn btn-export" style="width: auto; padding: 15px 30px;">📊 Baixar Relatório (CSV)</a>
     </div>
 
     <div class="grid-forms">
         <div class="card">
             <h3>🍽️ Novo Item (Cardápio)</h3>
             <form action="/add-item" method="POST">
-                <input type="text" name="name" placeholder="Nome (Ex: Batata Doce)" required>
-                <input type="text" name="category" placeholder="Categoria (Ex: Carboidrato)">
+                <input type="text" name="name" placeholder="Nome (Ex: Marmita Vegana)" required>
+                <select name="category" required>
+                    <option value="" disabled selected>Selecione a Categoria...</option>
+                    <option value="Principal">Principal</option>
+                    <option value="Acompanhamento">Acompanhamento</option>
+                    <option value="Bebida">Bebida</option>
+                    <option value="Sobremesa">Sobremesa</option>
+                </select>
                 <input type="number" name="price" step="0.01" min="0.01" placeholder="Preço (Ex: 19.90)" required>
+                <input type="text" name="description" placeholder="Descrição (Ex: Acompanha arroz e salada)">
                 <button type="submit" class="btn">Cadastrar Item</button>
             </form>
             
-            <h3 style="margin-top: 20px;">📋 Itens Cadastrados</h3>
-            <ul class="item-list">
-                <% items.forEach(item => { %>
-                    <li><strong><%= item.name %></strong> (<%= item.category %>) - R$ <%= Number(item.price).toFixed(2) %></li>
-                <% }) %>
-            </ul>
+            <details>
+                <summary>📋 Ver Itens Cadastrados (<%= items.length %>)</summary>
+                <div style="margin-top: 15px;">
+                    <% 
+                    const categories = ['Principal', 'Acompanhamento', 'Bebida', 'Sobremesa'];
+                    categories.forEach(cat => {
+                        const catItems = items.filter(i => i.category === cat);
+                        if (catItems.length > 0) {
+                    %>
+                        <h4 style="color: var(--primary); margin-bottom: 10px; margin-top: 10px;"><%= cat %></h4>
+                        <ul class="item-list">
+                            <% catItems.forEach(item => { %>
+                                <li>
+                                    <strong><%= item.name %></strong> - R$ <%= Number(item.price).toFixed(2) %>
+                                    <% if (item.description) { %>
+                                        <span class="item-desc"><%= item.description %></span>
+                                    <% } %>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% 
+                        }
+                    }); 
+                    %>
+                </div>
+            </details>
         </div>
 
         <div class="card">
             <h3>🛒 Lançar Novo Pedido</h3>
-            <form action="/orders" method="POST">
+            <form action="/orders" method="POST" id="new-order-form">
                 <input type="text" name="customer_name" placeholder="Nome do Cliente (Ex: João)" required>
-                <select name="item_id" required>
-                    <option value="" disabled selected>Selecione a Marmita...</option>
-                    <% items.forEach(item => { %>
-                        <option value="<%= item.id %>"><%= item.name %> - R$ <%= Number(item.price).toFixed(2) %></option>
-                    <% }) %>
-                </select>
-                <button type="submit" class="btn">Registrar Pedido</button>
+                
+                <div id="items-container">
+                    <div class="item-row">
+                        <select name="item_ids" required>
+                            <option value="" disabled selected>Selecione o Prato...</option>
+                            <% items.forEach(item => { %>
+                                <option value="<%= item.id %>"><%= item.name %> - R$ <%= Number(item.price).toFixed(2) %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-export" style="margin-bottom: 15px;" onclick="addMoreItems()">+ Adicionar Outro Prato ao Pedido</button>
+                <button type="submit" class="btn">Registrar Pedido Completo</button>
             </form>
         </div>
     </div>
 
     <div class="header" style="margin-bottom: 0;">
-        <h2>📦 Kanban da Cozinha</h2>
+        <h2>📦 Kanban da Cozinha <span style="font-size: 14px; color: var(--text-muted); font-weight: 300;">(Arraste os pedidos)</span></h2>
     </div>
 
     <div class="kanban-board">
         <% 
             const statuses = [
-                { id: 'Aberto', title: '🆕 Aberto', next: 'Cozinha' },
-                { id: 'Cozinha', title: '🍳 Na Cozinha', next: 'Entrega' },
-                { id: 'Entrega', title: '🛵 Em Entrega', next: 'Entregue' },
-                { id: 'Entregue', title: '✅ Entregue', next: null }
+                { id: 'Aberto', title: '🆕 Aberto' },
+                { id: 'Cozinha', title: '🍳 Na Cozinha' },
+                { id: 'Entrega', title: '🛵 Em Entrega' },
+                { id: 'Entregue', title: '✅ Entregue' }
             ];
         %>
 
         <% statuses.forEach(col => { %>
-            <div class="kanban-col">
+            <div class="kanban-col" id="<%= col.id %>" ondragover="allowDrop(event)" ondrop="drop(event)">
                 <h3><%= col.title %></h3>
                 <% 
                     const colOrders = orders ? orders.filter(o => o.status === col.id) : [];
                 %>
                 <% if (colOrders.length === 0) { %>
-                    <p style="color: #777; font-size: 13px; text-align: center;">Vazio</p>
+                    <p class="empty-msg" style="color: #777; font-size: 13px; text-align: center;">Vazio</p>
                 <% } else { %>
                     <% colOrders.forEach(order => { %>
-                        <div class="kanban-card">
+                        <div class="kanban-card" id="order-<%= order.id %>" draggable="true" ondragstart="drag(event)">
                             <strong>#<%= order.id %> - <%= order.customer_name %></strong>
-                            <em><%= order.item_name || 'Item Removido' %></em>
+                            <ul>
+                                <% order.itemsList.forEach(oi => { %>
+                                    <li><%= oi.item_name %></li>
+                                <% }) %>
+                            </ul>
+                            <div style="font-weight: 600; color: var(--success); margin-bottom: 10px; font-size: 14px;">Total: R$ <%= Number(order.total).toFixed(2) %></div>
                             
-                            <% if (col.next) { %>
-                                <form action="/update-order-status" method="POST" class="kanban-form">
-                                    <input type="hidden" name="order_id" value="<%= order.id %>">
-                                    <input type="hidden" name="new_status" value="<%= col.next %>">
-                                    <button type="submit" class="btn btn-small">Avançar ➔</button>
-                                </form>
-                            <% } %>
+                            <form action="/cancel-order" method="POST" style="margin:0;">
+                                <input type="hidden" name="order_id" value="<%= order.id %>">
+                                <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌ Cancelar</button>
+                            </form>
                         </div>
                     <% }) %>
                 <% } %>
@@ -325,11 +150,73 @@
             const toastMsg = urlParams.get('toast');
             if (toastMsg) {
                 showToast(toastMsg);
-                // Remove the query parameter without refreshing the page
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.replaceState({path:newUrl}, '', newUrl);
             }
         }
+
+        function addMoreItems() {
+            const container = document.getElementById('items-container');
+            const row = document.querySelector('.item-row').cloneNode(true);
+            row.querySelector('select').value = ""; // reset selection
+            container.appendChild(row);
+        }
+
+        // KANBAN DRAG AND DROP
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.currentTarget.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+            
+            var data = ev.dataTransfer.getData("text");
+            var card = document.getElementById(data);
+            
+            // Only drop inside kanban-col
+            var targetCol = ev.currentTarget;
+            var newStatus = targetCol.id;
+            var orderId = data.split('-')[1];
+
+            targetCol.appendChild(card);
+            
+            // Remove empty messages
+            const emptyMsgs = targetCol.querySelectorAll('.empty-msg');
+            emptyMsgs.forEach(m => m.remove());
+
+            // Make background fetch to update status
+            fetch('/update-order-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ order_id: orderId, new_status: newStatus })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    showToast('Status Atualizado');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Erro ao atualizar!');
+            });
+        }
+        
+        // Remove hover effect when dragging leaves
+        document.querySelectorAll('.kanban-col').forEach(col => {
+            col.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
+            });
+        });
     </script>
 </body>
 </html>
