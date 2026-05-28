@@ -105,7 +105,7 @@ app.post('/add-item', async (req, res) => {
             'INSERT INTO items (name, category, price) VALUES (?, ?, ?)',
             [normalizedName, normalizedCategory || null, parsedPrice]
         );
-        return res.redirect('/dashboard');
+        return res.redirect('/dashboard?toast=Item_Cadastrado');
     } catch (err) {
         console.error(err);
         return res.status(500).send('Erro ao cadastrar item.');
@@ -126,7 +126,7 @@ app.post('/orders', async (req, res) => {
             'INSERT INTO orders (customer_name, item_id, status) VALUES (?, ?, ?)',
             [normalizedName, parsedItemId, 'Aberto']
         );
-        return res.redirect('/dashboard');
+        return res.redirect('/dashboard?toast=Pedido_Registrado');
     } catch (err) {
         console.error(err);
         return res.status(500).send('Erro ao registrar pedido.');
@@ -145,7 +145,7 @@ app.post('/update-order-status', async (req, res) => {
             'UPDATE orders SET status = ? WHERE id = ?',
             [new_status, Number(order_id)]
         );
-        return res.redirect('/dashboard');
+        return res.redirect('/dashboard?toast=Status_Atualizado');
     } catch (err) {
         console.error(err);
         return res.status(500).send('Erro ao atualizar status do pedido.');
@@ -163,6 +163,29 @@ app.get('/dashboard', async (req, res) => {
         res.render('dashboard', { items, orders });
     } catch (err) {
         res.status(500).send("Erro ao carregar o dashboard.");
+    }
+});
+
+app.get('/admin/export', async (req, res) => {
+    try {
+        const [orders] = await pool.query(`
+            SELECT orders.id, orders.customer_name, items.name AS item_name, items.price, orders.status, orders.created_at
+            FROM orders 
+            LEFT JOIN items ON orders.item_id = items.id
+        `);
+
+        let csv = 'ID,Cliente,Item,Valor,Status,Data\n';
+        orders.forEach(order => {
+            const date = new Date(order.created_at).toISOString().split('T')[0];
+            csv += `${order.id},"${order.customer_name}","${order.item_name || ''}",${order.price || 0},${order.status},${date}\n`;
+        });
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename=vendas.csv');
+        return res.send(csv);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Erro ao exportar relatório.');
     }
 });
 

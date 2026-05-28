@@ -7,8 +7,8 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL 
 );
 
-INSERT INTO users (username, password) VALUES ('admin', '$2a$10$.dwrZVZokRMKIYgmY2oDMuuqpQn8ItSzJZwcPXc.sWZeOGzqUp2by');
-INSERT INTO users (username, password) VALUES ('isadora', '$2a$10$.dwrZVZokRMKIYgmY2oDMuuqpQn8ItSzJZwcPXc.sWZeOGzqUp2by');
+INSERT INTO users (username, password) VALUES ('admin', '$2a$10$bHjlr99dp9avrV.ikw5l2.r4cuRJzO02Dq46SZ/f4hl90m2FFq0IS');
+INSERT INTO users (username, password) VALUES ('isadora', '$2a$10$bHjlr99dp9avrV.ikw5l2.r4cuRJzO02Dq46SZ/f4hl90m2FFq0IS');
 
 CREATE TABLE IF NOT EXISTS items (
     id INT AUTO_INCREMENT PRIMARY KEY,

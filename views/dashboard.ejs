@@ -160,6 +160,68 @@
         .kanban-form {
             margin-top: 10px;
         }
+
+        /* TOAST NOTIFICATION */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .toast.show {
+            visibility: visible;
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @-webkit-keyframes fadein {
+            from {bottom: 0; opacity: 0;} 
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @-webkit-keyframes fadeout {
+            from {bottom: 30px; opacity: 1;} 
+            to {bottom: 0; opacity: 0;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+
+        /* RESPONSIVIDADE MOBILE */
+        @media (max-width: 768px) {
+            .grid-forms {
+                grid-template-columns: 1fr;
+            }
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            body {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -247,5 +309,27 @@
         <% }) %>
     </div>
 
+    <!-- Toast Element -->
+    <div id="toast" class="toast">Mensagem</div>
+
+    <script>
+        function showToast(message) {
+            var toast = document.getElementById("toast");
+            toast.textContent = message.replace(/_/g, ' ');
+            toast.className = "toast show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const toastMsg = urlParams.get('toast');
+            if (toastMsg) {
+                showToast(toastMsg);
+                // Remove the query parameter without refreshing the page
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({path:newUrl}, '', newUrl);
+            }
+        }
+    </script>
 </body>
 </html>

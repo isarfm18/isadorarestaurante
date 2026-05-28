@@ -2,7 +2,7 @@ name: ci-docker-build
 
 on:
   pull_request:
-    branches: ["develop"]
+    branches: ["main"]
 
 jobs:
   docker-build:
