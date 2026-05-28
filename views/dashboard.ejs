@@ -123,10 +123,12 @@
                             </ul>
                             <div style="font-weight: 600; color: var(--success); margin-bottom: 10px; font-size: 14px;">Total: R$ <%= Number(order.total).toFixed(2) %></div>
                             
-                            <form action="/cancel-order" method="POST" style="margin:0;">
-                                <input type="hidden" name="order_id" value="<%= order.id %>">
-                                <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌ Cancelar</button>
-                            </form>
+                            <% if (col.id === 'Aberto') { %>
+                                <form action="/cancel-order" method="POST" style="margin:0;">
+                                    <input type="hidden" name="order_id" value="<%= order.id %>">
+                                    <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌ Cancelar</button>
+                                </form>
+                            <% } %>
                         </div>
                     <% }) %>
                 <% } %>
