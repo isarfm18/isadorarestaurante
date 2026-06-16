@@ -2,22 +2,17 @@ name: integracao continua
 
 on:
   push:
-    branches: ["develop", "staging"]
+    branches: ["desenvolvimento", "homologacao", "main"]
   pull_request:
-    branches: ["develop"]
+    branches: ["desenvolvimento", "homologacao", "main"]
 
 jobs:
   estagio_build:
     runs-on: ubuntu-latest
+    container: node:18
     steps:
       - name: Checkout do código
         uses: actions/checkout@v6
-
-      - name: Configurar Node.js 18
-        uses: actions/setup-node@v6
-        with:
-          node-version: "18"
-          package-manager-cache: false
 
       - name: Gerar lockfile temporário
         run: npm install --package-lock-only
@@ -35,16 +30,11 @@ jobs:
 
   estagio_lint:
     runs-on: ubuntu-latest
+    container: node:18
     needs: estagio_build
     steps:
       - name: Checkout do código
         uses: actions/checkout@v6
-
-      - name: Configurar Node.js 18
-        uses: actions/setup-node@v6
-        with:
-          node-version: "18"
-          package-manager-cache: false
 
       - name: Gerar lockfile temporário
         run: npm install --package-lock-only
@@ -86,7 +76,7 @@ jobs:
   job_sonar:
     needs: estagio_lint
     runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/staging'
+    if: github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/homologacao'
     steps:
       - name: Checkout do código
         uses: actions/checkout@v6
@@ -112,7 +102,7 @@ jobs:
 
   job_release_docker:
     needs: estagio_lint
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/homologacao'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
@@ -138,7 +128,7 @@ jobs:
 
   job_trivy_sonar:
     needs: job_release_docker
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/homologacao'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código para o Sonar
