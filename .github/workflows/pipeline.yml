@@ -2,9 +2,9 @@ name: integracao continua
 
 on:
   push:
-    branches: ["desenvolvimento", "homologacao", "main"]
+    branches: ["develop", "staging", "main"]
   pull_request:
-    branches: ["desenvolvimento", "homologacao", "main"]
+    branches: ["develop", "staging", "main"]
 
 jobs:
   estagio_build:
