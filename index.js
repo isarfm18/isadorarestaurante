@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -11,7 +10,8 @@ const dbConfig = {
     port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'user',
     password: process.env.DB_PASS || 'password',
-    database: process.env.DB_NAME || 'isadoradb'
+    database: process.env.DB_NAME || 'isadoradb',
+    charset: 'utf8mb4'
 };
 
 let pool;
@@ -33,7 +33,7 @@ async function connectWithRetry() {
 }
 
 app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static('public'));
@@ -203,7 +203,7 @@ app.get('/dashboard', async (req, res) => {
         const [faturamentoResult] = await pool.query(`
             SELECT SUM(total) AS faturamento 
             FROM orders 
-            WHERE DATE(created_at) = CURDATE() AND status != 'Cancelado'
+            WHERE DATE(created_at) = CURDATE() AND status = 'Entregue'
         `);
         const faturamentoHoje = faturamentoResult[0].faturamento || 0;
 
@@ -221,10 +221,10 @@ app.get('/admin/export', async (req, res) => {
             FROM orders 
         `);
 
-        let csv = 'ID,Cliente,Valor Total,Status,Data\n';
+        let csv = 'ID;Cliente;Valor Total;Status;Data\n';
         orders.forEach(order => {
             const date = new Date(order.created_at).toISOString().split('T')[0];
-            csv += `${order.id},"${order.customer_name}",${order.total},${order.status},${date}\n`;
+            csv += `${order.id};"${order.customer_name}";${order.total};${order.status};${date}\n`;
         });
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -239,17 +239,17 @@ app.get('/admin/export', async (req, res) => {
 app.get('/faturamento', async (req, res) => {
     try {
         const [result] = await pool.query(`
-            SELECT SUM(items.price) AS total_hoje
+            SELECT SUM(total) AS total_hoje
             FROM orders 
-            JOIN items ON orders.item_id = items.id
-            WHERE DATE(orders.created_at) = CURDATE()
+            WHERE DATE(created_at) = CURDATE() AND status = 'Entregue'
         `);
         
         const [orders_hoje] = await pool.query(`
             SELECT orders.id, orders.customer_name, items.name AS item_name, items.price, orders.status, orders.created_at
             FROM orders 
-            JOIN items ON orders.item_id = items.id
-            WHERE DATE(orders.created_at) = CURDATE()
+            JOIN order_items ON orders.id = order_items.order_id
+            JOIN items ON order_items.item_id = items.id
+            WHERE DATE(orders.created_at) = CURDATE() AND orders.status = 'Entregue'
             ORDER BY orders.created_at DESC
         `);
 
