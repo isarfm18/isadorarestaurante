@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Isadora's Restaurant - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
 
     <div class="header">
@@ -18,9 +20,11 @@
     <div class="faturamento-card">
         <div>
             <h2 style="font-weight: 300; font-size: 18px;">Faturamento Hoje</h2>
-            <div class="value">R$ <%= Number(faturamentoHoje).toFixed(2).replace('.', ',') %></div>
+            <div class="value">R$ <%= Number(faturamentoHoje).toFixed(2).replace('.', ',' ) %>
+            </div>
         </div>
-        <a href="/admin/export" class="btn btn-export" style="width: auto; padding: 15px 30px;">📊 Baixar Relatório (CSV)</a>
+        <a href="/admin/export" class="btn btn-export" style="width: auto; padding: 15px 30px;">📊 Baixar Relatório
+            (CSV)</a>
     </div>
 
     <div class="grid-forms">
@@ -39,31 +43,33 @@
                 <input type="text" name="description" placeholder="Descrição (Ex: Acompanha arroz e salada)">
                 <button type="submit" class="btn">Cadastrar Item</button>
             </form>
-            
+
             <details>
                 <summary>📋 Ver Itens Cadastrados (<%= items.length %>)</summary>
                 <div style="margin-top: 15px;">
-                    <% 
-                    const categories = ['Principal', 'Acompanhamento', 'Bebida', 'Sobremesa'];
-                    categories.forEach(cat => {
+                    <% const categories=['Principal', 'Acompanhamento' , 'Bebida' , 'Sobremesa' ];
+                        categories.forEach(cat=> {
                         const catItems = items.filter(i => i.category === cat);
                         if (catItems.length > 0) {
-                    %>
-                        <h4 style="color: var(--primary); margin-bottom: 10px; margin-top: 10px;"><%= cat %></h4>
+                        %>
+                        <h4 style="color: var(--primary); margin-bottom: 10px; margin-top: 10px;">
+                            <%= cat %>
+                        </h4>
                         <ul class="item-list">
-                            <% catItems.forEach(item => { %>
+                            <% catItems.forEach(item=> { %>
                                 <li>
-                                    <strong><%= item.name %></strong> - R$ <%= Number(item.price).toFixed(2) %>
-                                    <% if (item.description) { %>
-                                        <span class="item-desc"><%= item.description %></span>
-                                    <% } %>
+                                    <strong>
+                                        <%= item.name %>
+                                    </strong> - R$ <%= Number(item.price).toFixed(2) %>
+                                        <% if (item.description) { %>
+                                            <span class="item-desc">
+                                                <%= item.description %>
+                                            </span>
+                                            <% } %>
                                 </li>
-                            <% }) %>
+                                <% }) %>
                         </ul>
-                    <% 
-                        }
-                    }); 
-                    %>
+                        <% } }); %>
                 </div>
             </details>
         </div>
@@ -72,68 +78,75 @@
             <h3>🛒 Lançar Novo Pedido</h3>
             <form action="/orders" method="POST" id="new-order-form">
                 <input type="text" name="customer_name" placeholder="Nome do Cliente (Ex: João)" required>
-                
+
                 <div id="items-container">
                     <div class="item-row">
                         <select name="item_ids" required>
                             <option value="" disabled selected>Selecione o Prato...</option>
-                            <% items.forEach(item => { %>
-                                <option value="<%= item.id %>"><%= item.name %> - R$ <%= Number(item.price).toFixed(2) %></option>
-                            <% }) %>
+                            <% items.forEach(item=> { %>
+                                <option value="<%= item.id %>">
+                                    <%= item.name %> - R$ <%= Number(item.price).toFixed(2) %>
+                                </option>
+                                <% }) %>
                         </select>
                     </div>
                 </div>
-                
-                <button type="button" class="btn btn-export" style="margin-bottom: 15px;" onclick="addMoreItems()">+ Adicionar Outro Prato ao Pedido</button>
+
+                <button type="button" class="btn btn-export" style="margin-bottom: 15px;" onclick="addMoreItems()">+
+                    Adicionar Outro Prato ao Pedido</button>
                 <button type="submit" class="btn">Registrar Pedido Completo</button>
             </form>
         </div>
     </div>
 
     <div class="header" style="margin-bottom: 0;">
-        <h2>📦 Kanban da Cozinha <span style="font-size: 14px; color: var(--text-muted); font-weight: 300;">(Arraste os pedidos)</span></h2>
+        <h2>📦 Controle da Cozinha <span style="font-size: 14px; color: var(--text-muted); font-weight: 300;">(Arraste
+                os pedidos)</span></h2>
     </div>
 
     <div class="kanban-board">
-        <% 
-            const statuses = [
-                { id: 'Aberto', title: '🆕 Aberto' },
-                { id: 'Cozinha', title: '🍳 Na Cozinha' },
-                { id: 'Entrega', title: '🛵 Em Entrega' },
-                { id: 'Entregue', title: '✅ Entregue' }
-            ];
-        %>
+        <% const statuses=[ { id: 'Aberto' , title: '🆕 Aberto' }, { id: 'Cozinha' , title: '🍳 Na Cozinha' }, {
+            id: 'Entrega' , title: '🛵 Em Entrega' }, { id: 'Entregue' , title: '✅ Entregue' } ]; %>
 
-        <% statuses.forEach(col => { %>
-            <div class="kanban-col" id="<%= col.id %>" ondragover="allowDrop(event)" ondrop="drop(event)">
-                <h3><%= col.title %></h3>
-                <% 
-                    const colOrders = orders ? orders.filter(o => o.status === col.id) : [];
-                %>
-                <% if (colOrders.length === 0) { %>
-                    <p class="empty-msg" style="color: #777; font-size: 13px; text-align: center;">Vazio</p>
-                <% } else { %>
-                    <% colOrders.forEach(order => { %>
-                        <div class="kanban-card" id="order-<%= order.id %>" draggable="true" ondragstart="drag(event)">
-                            <strong>#<%= order.id %> - <%= order.customer_name %></strong>
-                            <ul>
-                                <% order.itemsList.forEach(oi => { %>
-                                    <li><%= oi.item_name %></li>
-                                <% }) %>
-                            </ul>
-                            <div style="font-weight: 600; color: var(--success); margin-bottom: 10px; font-size: 14px;">Total: R$ <%= Number(order.total).toFixed(2) %></div>
-                            
-                            <% if (col.id === 'Aberto') { %>
-                                <form action="/cancel-order" method="POST" style="margin:0;">
-                                    <input type="hidden" name="order_id" value="<%= order.id %>">
-                                    <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌ Cancelar</button>
-                                </form>
-                            <% } %>
-                        </div>
-                    <% }) %>
-                <% } %>
-            </div>
-        <% }) %>
+            <% statuses.forEach(col=> { %>
+                <div class="kanban-col" id="<%= col.id %>" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <h3>
+                        <%= col.title %>
+                    </h3>
+                    <% const colOrders=orders ? orders.filter(o=> o.status === col.id) : [];
+                        %>
+                        <% if (colOrders.length===0) { %>
+                            <p class="empty-msg" style="color: #777; font-size: 13px; text-align: center;">Vazio</p>
+                            <% } else { %>
+                                <% colOrders.forEach(order=> { %>
+                                    <div class="kanban-card" id="order-<%= order.id %>" draggable="true"
+                                        ondragstart="drag(event)">
+                                        <strong>#<%= order.id %> - <%= order.customer_name %></strong>
+                                        <ul>
+                                            <% order.itemsList.forEach(oi=> { %>
+                                                <li>
+                                                    <%= oi.item_name %>
+                                                </li>
+                                                <% }) %>
+                                        </ul>
+                                        <div
+                                            style="font-weight: 600; color: var(--success); margin-bottom: 10px; font-size: 14px;">
+                                            Total: R$ <%= Number(order.total).toFixed(2) %>
+                                        </div>
+
+                                        <% if (col.id==='Aberto' ) { %>
+                                            <form action="/cancel-order" method="POST" style="margin:0;">
+                                                <input type="hidden" name="order_id" value="<%= order.id %>">
+                                                <button type="submit" class="btn btn-small btn-danger"
+                                                    onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌
+                                                    Cancelar</button>
+                                            </form>
+                                            <% } %>
+                                    </div>
+                                    <% }) %>
+                                        <% } %>
+                </div>
+                <% }) %>
     </div>
 
     <!-- Toast Element -->
@@ -144,16 +157,16 @@
             var toast = document.getElementById("toast");
             toast.textContent = message.replace(/_/g, ' ');
             toast.className = "toast show";
-            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+            setTimeout(function () { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        window.onload = function() {
+        window.onload = function () {
             const urlParams = new URLSearchParams(window.location.search);
             const toastMsg = urlParams.get('toast');
             if (toastMsg) {
                 showToast(toastMsg);
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                window.history.replaceState({path:newUrl}, '', newUrl);
+                window.history.replaceState({ path: newUrl }, '', newUrl);
             }
         }
 
@@ -177,17 +190,17 @@
         function drop(ev) {
             ev.preventDefault();
             ev.currentTarget.classList.remove('drag-over');
-            
+
             var data = ev.dataTransfer.getData("text");
             var card = document.getElementById(data);
-            
+
             // Only drop inside kanban-col
             var targetCol = ev.currentTarget;
             var newStatus = targetCol.id;
             var orderId = data.split('-')[1];
 
             targetCol.appendChild(card);
-            
+
             // Remove empty messages
             const emptyMsgs = targetCol.querySelectorAll('.empty-msg');
             emptyMsgs.forEach(m => m.remove());
@@ -201,24 +214,25 @@
                 },
                 body: JSON.stringify({ order_id: orderId, new_status: newStatus })
             })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    showToast('Status Atualizado');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                showToast('Erro ao atualizar!');
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Status Atualizado');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Erro ao atualizar!');
+                });
         }
-        
+
         // Remove hover effect when dragging leaves
         document.querySelectorAll('.kanban-col').forEach(col => {
-            col.addEventListener('dragleave', function(e) {
+            col.addEventListener('dragleave', function (e) {
                 this.classList.remove('drag-over');
             });
         });
     </script>
 </body>
+
 </html>

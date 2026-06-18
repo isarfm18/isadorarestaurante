@@ -1,145 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Isadora's Restaurant - Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isadora's Restaurant - Login</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    body {
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: linear-gradient(135deg, #2b0a3d, #3a0f4f, #4a145f);
-    }
-
-    .login-container {
-        background: rgba(20, 5, 30, 0.95);
-        padding: 45px 35px;
-        width: 340px;
-        border-radius: 18px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        text-align: center;
-        color: #eee;
-    }
-
-    .logo-img {
-        width: 110px;
-        margin-bottom: 20px;
-        border-radius: 50%;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    }
-
-    .restaurant-name {
-        font-size: 22px;
-        font-weight: 600;
-        color: #d16ba5;
-        margin-bottom: 5px;
-        letter-spacing: 1px;
-    }
-
-    .subtitle {
-        font-size: 13px;
-        color: #bbb;
-        margin-bottom: 25px;
-    }
-
-    .input-group {
-        text-align: left;
-        margin-bottom: 18px;
-    }
-
-    .input-group label {
-        font-size: 13px;
-        color: #ccc;
-    }
-
-    .input-group input {
-        width: 100%;
-        padding: 11px;
-        margin-top: 6px;
-        border-radius: 10px;
-        border: 1px solid #5a2a6c;
-        background-color: #2a0e3a;
-        color: #fff;
-        outline: none;
-        transition: 0.3s;
-    }
-
-    .input-group input:focus {
-        border-color: #a4508b;
-        box-shadow: 0 0 10px rgba(164, 80, 139, 0.5);
-    }
-
-    .btn {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #7b2cbf, #a4508b);
-        color: white;
-        font-weight: 600;
-        font-size: 15px;
-        cursor: pointer;
-        transition: 0.3s;
-        margin-top: 10px;
-    }
-
-    .btn:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    }
-
-    .footer-text {
-        margin-top: 18px;
-        font-size: 12px;
-        color: #777;
-    }
-</style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
-<body>
+<body class="login-body">
 
-<div class="login-container">
+    <div class="login-container">
 
-    <img src="/images/logo.png" alt="Logo Isadora's Restaurant" class="logo-img">
-         <class="logo-img">
+        <img src="/images/logo.png" alt="Logo Isadora's Restaurant" class="logo-img">
 
-    <div class="restaurant-name">Isadora's Restaurant</div>
-    <div class="subtitle">Acesse sua conta</div>
+        <div class="restaurant-name">Isadora's Restaurant</div>
+        <div class="subtitle">Acesse sua conta</div>
 
-    <form action="/login" method="POST">
+        <form action="/login" method="POST">
 
-        <div class="input-group">
-            <label for="username">Usuário</label>
-            <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+            <div class="input-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+            </div>
+
+            <button type="submit" class="btn">Entrar</button>
+
+        </form>
+
+        <div class="footer-text">
+            © 2026 Isadora's Restaurant
         </div>
 
-        <div class="input-group">
-            <label for="password">Senha</label>
-            <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
-        </div>
-
-        <button type="submit" class="btn">Entrar</button>
-
-    </form>
-
-    <div class="footer-text">
-        © 2026 Isadora's Restaurant
     </div>
 
-</div>
-
 </body>
+
 </html>
