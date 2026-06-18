@@ -13,15 +13,22 @@ INSERT INTO users (username, password) VALUES ('isadora', '$2a$10$bHjlr99dp9avrV
 CREATE TABLE IF NOT EXISTS items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    category VARCHAR(50),
+    description TEXT,
     price DECIMAL(10,2) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_name VARCHAR(100) NOT NULL,
-    item_id INT NOT NULL,
-    status VARCHAR(20) DEFAULT 'Aberto',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (item_id) REFERENCES items(id)
+    items_description TEXT NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    status ENUM('Aberto', 'Cozinha', 'Entrega', 'Entregue', 'Cancelado') DEFAULT 'Aberto',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO items (name, description, price) VALUES 
+('Marmita P', 'Arroz, feijão, 1 mistura, guarnição', 15.00),
+('Marmita M', 'Arroz, feijão, 2 misturas, guarnição', 20.00),
+('Marmita G', 'Arroz, feijão, 3 misturas, salada e fritas', 25.00),
+('Refrigerante Lata', 'Coca-cola, Guaraná, Fanta 350ml', 5.00),
+('Suco Natural', 'Laranja, Limão ou Maracujá 500ml', 8.00);

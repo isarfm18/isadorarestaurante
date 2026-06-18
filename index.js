@@ -35,7 +35,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-
 app.use(express.static('public'));
 
 app.get('/', (req, res) => res.render('login'));
@@ -52,8 +51,6 @@ app.post('/login', async (req, res) => {
 
         if (rows.length > 0) {
             const user = rows[0];
-
-
             const match = await bcrypt.compare(password, user.password);
 
             if (match) {
@@ -90,41 +87,44 @@ app.post('/register', async (req, res) => {
     }
 });
 
+// NOVA ROTA: Adicionar item ao cardápio com descrição
 app.post('/add-item', async (req, res) => {
-    const { name, category, price } = req.body;
+    const { name, description, price } = req.body;
     const normalizedName = typeof name === 'string' ? name.trim() : '';
-    const normalizedCategory = typeof category === 'string' ? category.trim() : '';
+    const normalizedDesc = typeof description === 'string' ? description.trim() : '';
     const parsedPrice = Number(price);
 
     if (!normalizedName || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-        return res.status(400).send('Dados inválidos: nome obrigatório e preço deve ser número positivo.');
+        return res.status(400).send('Dados inválidos: nome obrigatório e preço deve ser um número positivo.');
     }
 
     try {
         await pool.query(
-            'INSERT INTO items (name, category, price) VALUES (?, ?, ?)',
-            [normalizedName, normalizedCategory || null, parsedPrice]
+            'INSERT INTO items (name, description, price) VALUES (?, ?, ?)',
+            [normalizedName, normalizedDesc || null, parsedPrice]
         );
         return res.redirect('/dashboard?toast=Item_Cadastrado');
     } catch (err) {
         console.error(err);
-        return res.status(500).send('Erro ao cadastrar item.');
+        return res.status(500).send('Erro ao cadastrar item no cardápio.');
     }
 });
 
+// NOVA ROTA: Criar pedido com múltiplos itens e valor total
 app.post('/orders', async (req, res) => {
-    const { customer_name, item_id } = req.body;
+    const { customer_name, items_description, total } = req.body;
     const normalizedName = typeof customer_name === 'string' ? customer_name.trim() : '';
-    const parsedItemId = Number(item_id);
+    const normalizedDesc = typeof items_description === 'string' ? items_description.trim() : '';
+    const parsedTotal = Number(total);
 
-    if (!normalizedName || !Number.isInteger(parsedItemId) || parsedItemId <= 0) {
-        return res.status(400).send('Dados inválidos: nome do cliente e marmita são obrigatórios.');
+    if (!normalizedName || !normalizedDesc || !Number.isFinite(parsedTotal) || parsedTotal <= 0) {
+        return res.status(400).send('Dados inválidos: adicione pelo menos um item ao carrinho.');
     }
 
     try {
         await pool.query(
-            'INSERT INTO orders (customer_name, item_id, status) VALUES (?, ?, ?)',
-            [normalizedName, parsedItemId, 'Aberto']
+            'INSERT INTO orders (customer_name, items_description, total, status) VALUES (?, ?, ?, ?)',
+            [normalizedName, normalizedDesc, parsedTotal, 'Aberto']
         );
         return res.redirect('/dashboard?toast=Pedido_Registrado');
     } catch (err) {
@@ -133,17 +133,19 @@ app.post('/orders', async (req, res) => {
     }
 });
 
-app.post('/update-order-status', async (req, res) => {
-    const { order_id, new_status } = req.body;
+// ROTA ATUALIZADA: Mudar o status (Kanban e Botão de Cancelamento)
+app.post('/orders/:id/status', async (req, res) => {
+    const { status } = req.body;
+    const orderId = req.params.id;
 
-    if (!order_id || !new_status) {
+    if (!orderId || !status) {
         return res.status(400).send('ID do pedido e novo status são obrigatórios.');
     }
 
     try {
         await pool.query(
             'UPDATE orders SET status = ? WHERE id = ?',
-            [new_status, Number(order_id)]
+            [status, Number(orderId)]
         );
         return res.redirect('/dashboard?toast=Status_Atualizado');
     } catch (err) {
@@ -152,32 +154,41 @@ app.post('/update-order-status', async (req, res) => {
     }
 });
 
+// ROTA ATUALIZADA: Carregar o Dashboard com faturamento e cardápio
 app.get('/dashboard', async (req, res) => {
     try {
-        const [items] = await pool.query('SELECT * FROM items');
-        const [orders] = await pool.query(`
-            SELECT orders.*, items.name AS item_name 
+        // 1. Pega os itens para o cardápio expansível
+        const [menuItems] = await pool.query('SELECT * FROM items');
+
+        // 2. Pega todos os pedidos
+        const [orders] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+
+        // 3. Calcula o Faturamento do Dia (Soma apenas os Entregues de Hoje)
+        const [revenueResult] = await pool.query(`
+            SELECT SUM(total) as faturamentoHoje 
             FROM orders 
-            LEFT JOIN items ON orders.item_id = items.id
+            WHERE DATE(created_at) = CURDATE() AND status = 'Entregue'
         `);
-        res.render('dashboard', { items, orders });
+        const faturamentoHoje = revenueResult[0].faturamentoHoje || 0;
+
+        res.render('dashboard', { orders, menuItems, faturamentoHoje });
     } catch (err) {
+        console.error(err);
         res.status(500).send("Erro ao carregar o dashboard.");
     }
 });
 
+// ROTA ATUALIZADA: Exportar CSV
 app.get('/admin/export', async (req, res) => {
     try {
-        const [orders] = await pool.query(`
-            SELECT orders.id, orders.customer_name, items.name AS item_name, items.price, orders.status, orders.created_at
-            FROM orders 
-            LEFT JOIN items ON orders.item_id = items.id
-        `);
+        const [orders] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
 
-        let csv = 'ID,Cliente,Item,Valor,Status,Data\n';
+        let csv = 'ID,Cliente,Itens,Total,Status,Data\n';
         orders.forEach(order => {
             const date = new Date(order.created_at).toISOString().split('T')[0];
-            csv += `${order.id},"${order.customer_name}","${order.item_name || ''}",${order.price || 0},${order.status},${date}\n`;
+            // Precisamos tratar a string dos itens para evitar quebras no Excel
+            const escapedItems = order.items_description.replace(/"/g, '""');
+            csv += `${order.id},"${order.customer_name}","${escapedItems}",${order.total},${order.status},${date}\n`;
         });
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -202,7 +213,8 @@ app.get('/health', async (req, res) => {
 });
 
 connectWithRetry().then(() => {
+    // Mantemos a porta 3000 aqui, pois o Docker Compose é quem faz a ponte 8087 -> 3000
     app.listen(3000, () => {
-        console.log('ISADORA RESTAURANT ONLINE NA PORTA 3000');
+        console.log('ISADORA RESTAURANT ONLINE NA PORTA INTERNA 3000 (Externa 8087)');
     });
 });
