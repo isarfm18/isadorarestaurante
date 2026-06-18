@@ -1,10 +1,10 @@
-name: integracao continua
+name: integracao continua e deploy producao
 
 on:
   push:
-    branches: ["desenvolvimento", "homologacao", "main"]
+    branches: ["develop", "staging", "main"]
   pull_request:
-    branches: ["desenvolvimento", "homologacao", "main"]
+    branches: ["develop", "staging", "main"]
 
 jobs:
   estagio_build:
@@ -102,7 +102,7 @@ jobs:
 
   job_release_docker:
     needs: estagio_lint
-    if: github.ref == 'refs/heads/homologacao'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
@@ -123,12 +123,12 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/isadorarestaurante:staging
+            ${{ secrets.DOCKER_USERNAME }}/isadorarestaurante:latest
             ${{ secrets.DOCKER_USERNAME }}/isadorarestaurante:${{ github.sha }}
 
   job_trivy_sonar:
     needs: job_release_docker
-    if: github.ref == 'refs/heads/homologacao'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código para o Sonar
@@ -161,3 +161,44 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.TOKEN_SONAR }}
           SONAR_HOST_URL: "https://devsecops.dcotech.com.br"
+
+  job_deploy_ec2:
+    needs: job_trivy_sonar
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v6
+
+      - name: Preparar arquivo Compose com o identificador
+        run: |
+          cp docker-compose.yml docker-compose-isadora.yml
+
+      - name: Copiar Compose e init.sql para a EC2 (via SCP)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: "docker-compose-isadora.yml,init.sql"
+          target: "/home/${{ secrets.EC2_USER }}/isadorarestaurante"
+
+      - name: Executar o Deploy na EC2 (via SSH)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.EC2_USER }}/isadorarestaurante
+
+            echo "⏳ Executando init.sql no container mysql-infra..."
+            sudo docker exec -i mysql-infra \
+              mysql -u root -ppassword < init.sql
+
+            echo "✅ init.sql executado com sucesso!"
+
+            sudo docker compose -f docker-compose-isadora.yml pull
+            sudo docker compose -f docker-compose-isadora.yml up -d
+
+            echo "✅ Deploy finalizado com sucesso na EC2!"
