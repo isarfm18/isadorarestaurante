@@ -3,191 +3,254 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Isadora's Restaurant</title>
-    <link rel="stylesheet" href="/styles.css">
+    <title>Isadora's Restaurant - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
 
-    <div id="snackbar" class="toast">Ação realizada com sucesso!</div>
-
-    <div class="header-container">
-        <div class="header-info">
-            <h1>Isadora's Restaurant</h1>
-            <p>Bem-vindo ao painel de controle.</p>
-            <br>
-            <a href="/admin/export" class="btn btn-link">📥 Baixar Relatório (CSV)</a>
-            <a href="/" class="btn btn-danger btn-link">Sair</a>
-        </div>
-
-        <div class="card card-highlight">
-            <h3 class="highlight-title">Faturamento de Hoje</h3>
-            <p class="highlight-value">R$ <%= faturamentoHoje.toFixed(2) %>
-            </p>
-            <small class="text-muted">(Apenas pedidos 'Entregues')</small>
+    <div class="header">
+        <h1>Painel Administrativo - Isadora's Restaurant</h1>
+        <div>
+            <a href="/" style="color: var(--text-muted); text-decoration: none; font-weight: bold;">Sair</a>
         </div>
     </div>
 
-    <div class="card">
-        <h3>Registrar Novo Pedido</h3>
-
-        <details class="menu-details">
-            <summary class="menu-summary">🍽️ Ver Cardápio e Adicionar Itens</summary>
-            <ul>
-                <% if(menuItems && menuItems.length> 0) { %>
-                    <% menuItems.forEach(item=> { %>
-                        <li class="menu-item">
-                            <div>
-                                <strong class="text-white">
-                                    <%= item.name %>
-                                </strong> - R$ <%= Number(item.price).toFixed(2) %><br>
-                                    <small class="text-light-muted">
-                                        <%= item.description %>
-                                    </small>
-                            </div>
-                            <button type="button" class="btn btn-sm"
-                                onclick="adicionarAoPedido('<%= item.name %>', <%= item.price %>)">
-                                + Adicionar
-                            </button>
-                        </li>
-                        <% }) %>
-                            <% } else { %>
-                                <li>Nenhum item cadastrado no cardápio.</li>
-                                <% } %>
-            </ul>
-        </details>
-
-        <div id="carrinho" class="carrinho-box">
-            <h4 class="carrinho-title">Carrinho:</h4>
-            <ul id="lista-itens" class="carrinho-list"></ul>
-            <h3 class="carrinho-total">Total: R$ <span id="total-pedido">0.00</span></h3>
-        </div>
-
-        <form action="/orders" method="POST">
-            <input type="text" name="customer_name" placeholder="Nome do Cliente (Ex: Mesa 04 ou João)" required>
-
-            <input type="hidden" id="input-descricao" name="items_description" required>
-            <input type="hidden" id="input-total" name="total" required>
-
-            <button type="submit" class="btn btn-success">✅ Concluir e Enviar Pedido</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <details>
-            <summary class="menu-summary">➕ Cadastrar Novo Prato no Cardápio</summary>
-            <div class="form-group-mt">
-                <form action="/add-item" method="POST">
-                    <input type="text" name="name" placeholder="Nome do Prato/Bebida" required>
-                    <input type="text" name="description" placeholder="Descrição dos ingredientes" required>
-                    <input type="number" name="price" step="0.01" min="0.01" placeholder="Preço (Ex: 15.50)" required>
-                    <button type="submit" class="btn">Salvar no Cardápio</button>
-                </form>
+    <div class="faturamento-card">
+        <div>
+            <h2 style="font-weight: 300; font-size: 18px;">Faturamento Hoje</h2>
+            <div class="value">R$ <%= Number(faturamentoHoje).toFixed(2).replace('.', ',' ) %>
             </div>
-        </details>
+        </div>
+        <a href="/admin/export" class="btn btn-export" style="width: auto; padding: 15px 30px;">📊 Baixar Relatório
+            (CSV)</a>
     </div>
 
-    <h2 class="section-title">Painel de Produção (Kanban)</h2>
+    <div class="grid-forms">
+        <div class="card">
+            <h3>🍽️ Novo Item (Cardápio)</h3>
+            <form action="/add-item" method="POST">
+                <input type="text" name="name" placeholder="Nome (Ex: Marmita Vegana)" required>
+                <select name="category" required>
+                    <option value="" disabled selected>Selecione a Categoria...</option>
+                    <option value="Principal">Principal</option>
+                    <option value="Acompanhamento">Acompanhamento</option>
+                    <option value="Bebida">Bebida</option>
+                    <option value="Sobremesa">Sobremesa</option>
+                </select>
+                <input type="number" name="price" step="0.01" min="0.01" placeholder="Preço (Ex: 19.90)" required>
+                <input type="text" name="description" placeholder="Descrição (Ex: Acompanha arroz e salada)">
+                <button type="submit" class="btn">Cadastrar Item</button>
+            </form>
+
+            <details>
+                <summary>📋 Ver Itens Cadastrados (<%= items.length %>)</summary>
+                <div style="margin-top: 15px;">
+                    <% const categories=['Principal', 'Acompanhamento' , 'Bebida' , 'Sobremesa' ];
+                        categories.forEach(cat=> {
+                        const catItems = items.filter(i => i.category === cat);
+                        if (catItems.length > 0) {
+                        %>
+                        <h4 style="color: var(--primary); margin-bottom: 10px; margin-top: 10px;">
+                            <%= cat %>
+                        </h4>
+                        <ul class="item-list">
+                            <% catItems.forEach(item=> { %>
+                                <li>
+                                    <strong>
+                                        <%= item.name %>
+                                    </strong> - R$ <%= Number(item.price).toFixed(2) %>
+                                        <% if (item.description) { %>
+                                            <span class="item-desc">
+                                                <%= item.description %>
+                                            </span>
+                                            <% } %>
+                                </li>
+                                <% }) %>
+                        </ul>
+                        <% } }); %>
+                </div>
+            </details>
+        </div>
+
+        <div class="card">
+            <h3>🛒 Lançar Novo Pedido</h3>
+            <form action="/orders" method="POST" id="new-order-form">
+                <input type="text" name="customer_name" placeholder="Nome do Cliente (Ex: João)" required>
+
+                <div id="items-container">
+                    <div class="item-row">
+                        <select name="item_ids" required>
+                            <option value="" disabled selected>Selecione o Prato...</option>
+                            <% items.forEach(item=> { %>
+                                <option value="<%= item.id %>">
+                                    <%= item.name %> - R$ <%= Number(item.price).toFixed(2) %>
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-export" style="margin-bottom: 15px;" onclick="addMoreItems()">+
+                    Adicionar Outro Prato ao Pedido</button>
+                <button type="submit" class="btn">Registrar Pedido Completo</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="header" style="margin-bottom: 0;">
+        <h2>📦 Controle da Cozinha <span style="font-size: 14px; color: var(--text-muted); font-weight: 300;">(Arraste
+                os pedidos)</span></h2>
+    </div>
 
     <div class="kanban-board">
-        <% const columns=['Aberto', 'Cozinha' , 'Entrega' , 'Entregue' ]; %>
+        <% const statuses=[ { id: 'Aberto' , title: '🆕 Aberto' }, { id: 'Cozinha' , title: '🍳 Na Cozinha' }, {
+            id: 'Entrega' , title: '🛵 Em Entrega' }, { id: 'Entregue' , title: '✅ Entregue' } ]; %>
 
-            <% columns.forEach(col=> { %>
-                <div class="kanban-col">
-                    <h3 class="col-title">
-                        <%= col %>
+            <% statuses.forEach(col=> { %>
+                <div class="kanban-col" id="<%= col.id %>" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <h3>
+                        <%= col.title %>
                     </h3>
+                    <% const colOrders=orders ? orders.filter(o=> o.status === col.id) : [];
+                        %>
+                        <% if (colOrders.length===0) { %>
+                            <p class="empty-msg" style="color: #777; font-size: 13px; text-align: center;">Vazio</p>
+                            <% } else { %>
+                                <% colOrders.forEach(order=> { %>
+                                    <div class="kanban-card" id="order-<%= order.id %>" draggable="true"
+                                        ondragstart="drag(event)">
+                                        <strong>#<%= order.id %> - <%= order.customer_name %></strong>
+                                        <ul>
+                                            <% order.itemsList.forEach(oi=> { %>
+                                                <li>
+                                                    <%= oi.item_name %>
+                                                </li>
+                                                <% }) %>
+                                        </ul>
+                                        <div
+                                            style="font-weight: 600; color: var(--success); margin-bottom: 10px; font-size: 14px;">
+                                            Total: R$ <%= Number(order.total).toFixed(2) %>
+                                        </div>
 
-                    <% orders.filter(o=> o.status === col).forEach(order => { %>
-                        <div class="kanban-item">
-                            <p><strong>Pedido #<%= order.id %></strong></p>
-                            <p class="item-client">👤 <%= order.customer_name %>
-                            </p>
-                            <p class="item-desc">🛒 <%= order.items_description %>
-                            </p>
-                            <p class="item-price">R$ <%= Number(order.total).toFixed(2) %>
-                            </p>
-                            <p class="item-time">⏳ <%= new Date(order.created_at).toLocaleTimeString('pt-BR') %>
-                            </p>
-
-                            <div class="item-actions">
-                                <% if (col==='Aberto' ) { %>
-                                    <form action="/orders/<%= order.id %>/status" method="POST">
-                                        <input type="hidden" name="status" value="Cozinha">
-                                        <button type="submit" class="btn">Enviar p/ Cozinha 🍳</button>
-                                    </form>
-                                    <% } else if (col==='Cozinha' ) { %>
-                                        <form action="/orders/<%= order.id %>/status" method="POST">
-                                            <input type="hidden" name="status" value="Entrega">
-                                            <button type="submit" class="btn">Saiu p/ Entrega 🛵</button>
-                                        </form>
-                                        <% } else if (col==='Entrega' ) { %>
-                                            <form action="/orders/<%= order.id %>/status" method="POST">
-                                                <input type="hidden" name="status" value="Entregue">
-                                                <button type="submit" class="btn">Finalizar (Entregue) ✅</button>
-                                            </form>
-                                            <% } %>
-
-                                                <% if (col !=='Entregue' ) { %>
-                                                    <form action="/orders/<%= order.id %>/status" method="POST">
-                                                        <input type="hidden" name="status" value="Cancelado">
-                                                        <button type="submit" class="btn btn-danger">❌ Cancelar
-                                                            Pedido</button>
-                                                    </form>
-                                                    <% } %>
-                            </div>
-                        </div>
-                        <% }) %>
+                                         <% if (col.id==='Aberto' || col.id==='Cozinha') { %>
+                                             <form action="/cancel-order" method="POST" style="margin:0;">
+                                                 <input type="hidden" name="order_id" value="<%= order.id %>">
+                                                 <button type="submit" class="btn btn-small btn-danger"
+                                                     onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌
+                                                     Cancelar</button>
+                                             </form>
+                                             <% } %>
+                                    </div>
+                                    <% }) %>
+                                        <% } %>
                 </div>
                 <% }) %>
     </div>
 
-    <% const cancelados=orders.filter(o=> o.status === 'Cancelado'); %>
-        <% if(cancelados.length> 0) { %>
-            <h3 class="cancelados-title">Pedidos Cancelados</h3>
-            <div class="cancelados-list">
-                <% cancelados.forEach(order=> { %>
-                    <div class="kanban-item kanban-item-cancelado">
-                        <p><del>Pedido #<%= order.id %> - <%= order.customer_name %></del></p>
-                        <p class="text-muted">
-                            <%= order.items_description %>
-                        </p>
-                    </div>
-                    <% }) %>
-            </div>
-            <% } %>
+    <div id="toast" class="toast">Mensagem</div>
 
-                <script>
-                    let itensPedido = [];
-                    let valorTotal = 0.0;
+    <script>
+        function showToast(message) {
+            var toast = document.getElementById("toast");
+            toast.textContent = message.replace(/_/g, ' ');
+            toast.className = "toast show";
+            setTimeout(function () { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
 
-                    function adicionarAoPedido(nome, preco) {
-                        itensPedido.push(nome);
-                        valorTotal += preco;
+        window.onload = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const toastMsg = urlParams.get('toast');
+            if (toastMsg) {
+                showToast(toastMsg);
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({ path: newUrl }, '', newUrl);
+            }
+        }
 
-                        const lista = document.getElementById('lista-itens');
-                        const li = document.createElement('li');
-                        li.textContent = `${nome} (R$ ${preco.toFixed(2)})`;
-                        lista.appendChild(li);
+        function addMoreItems() {
+            const container = document.getElementById('items-container');
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.style.display = 'flex';
+            row.style.gap = '10px';
+            row.style.alignItems = 'center';
+            row.style.marginBottom = '15px';
+            
+            const originalSelect = document.querySelector('.item-row select');
+            const select = originalSelect.cloneNode(true);
+            select.value = "";
+            select.style.marginBottom = "0";
+            select.style.flex = "1";
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-danger btn-small';
+            removeBtn.style.marginTop = '0';
+            removeBtn.style.width = 'auto';
+            removeBtn.style.padding = '12px 15px';
+            removeBtn.textContent = '❌';
+            removeBtn.onclick = function() {
+                row.remove();
+            };
+            
+            row.appendChild(select);
+            row.appendChild(removeBtn);
+            container.appendChild(row);
+        }
 
-                        document.getElementById('total-pedido').textContent = valorTotal.toFixed(2);
-                        document.getElementById('input-descricao').value = itensPedido.join(' + ');
-                        document.getElementById('input-total').value = valorTotal;
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.currentTarget.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+
+            var data = ev.dataTransfer.getData("text");
+            var card = document.getElementById(data);
+
+            var targetCol = ev.currentTarget;
+            var newStatus = targetCol.id;
+            var orderId = data.split('-')[1];
+
+            targetCol.appendChild(card);
+
+            const emptyMsgs = targetCol.querySelectorAll('.empty-msg');
+            emptyMsgs.forEach(m => m.remove());
+
+            fetch('/update-order-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ order_id: orderId, new_status: newStatus })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Status Atualizado');
                     }
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Erro ao atualizar!');
+                });
+        }
 
-                    window.onload = () => {
-                        const params = new URLSearchParams(window.location.search);
-                        if (params.has('toast')) {
-                            const snackbar = document.getElementById("snackbar");
-                            const msg = params.get('toast').replace(/_/g, ' ');
-                            snackbar.innerText = `✔️ ${msg}`;
-                            snackbar.className = "toast show";
-                            setTimeout(function () { snackbar.className = snackbar.className.replace("show", ""); }, 3000);
-                            window.history.replaceState({}, document.title, "/dashboard");
-                        }
-                    };
-                </script>
+        document.querySelectorAll('.kanban-col').forEach(col => {
+            col.addEventListener('dragleave', function (e) {
+                this.classList.remove('drag-over');
+            });
+        });
+    </script>
 </body>
 
 </html>

@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -8,9 +7,11 @@ const app = express();
 
 const dbConfig = {
     host: process.env.DB_HOST || 'db',
+    port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'user',
     password: process.env.DB_PASS || 'password',
-    database: process.env.DB_NAME || 'isadoradb'
+    database: process.env.DB_NAME || 'isadoradb',
+    charset: 'utf8mb4'
 };
 
 let pool;
@@ -31,10 +32,10 @@ async function connectWithRetry() {
     process.exit(1);
 }
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
 app.use(express.static('public'));
 
 app.get('/', (req, res) => res.render('login'));
@@ -51,6 +52,8 @@ app.post('/login', async (req, res) => {
 
         if (rows.length > 0) {
             const user = rows[0];
+
+
             const match = await bcrypt.compare(password, user.password);
 
             if (match) {
@@ -87,45 +90,62 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// NOVA ROTA: Adicionar item ao cardápio com descrição
 app.post('/add-item', async (req, res) => {
-    const { name, description, price } = req.body;
+    const { name, category, price, description } = req.body;
     const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedCategory = typeof category === 'string' ? category.trim() : '';
     const normalizedDesc = typeof description === 'string' ? description.trim() : '';
     const parsedPrice = Number(price);
 
     if (!normalizedName || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-        return res.status(400).send('Dados inválidos: nome obrigatório e preço deve ser um número positivo.');
+        return res.status(400).send('Dados inválidos: nome obrigatório e preço deve ser número positivo.');
     }
 
     try {
         await pool.query(
-            'INSERT INTO items (name, description, price) VALUES (?, ?, ?)',
-            [normalizedName, normalizedDesc || null, parsedPrice]
+            'INSERT INTO items (name, category, price, description) VALUES (?, ?, ?, ?)',
+            [normalizedName, normalizedCategory || null, parsedPrice, normalizedDesc || null]
         );
         return res.redirect('/dashboard?toast=Item_Cadastrado');
     } catch (err) {
         console.error(err);
-        return res.status(500).send('Erro ao cadastrar item no cardápio.');
+        return res.status(500).send('Erro ao cadastrar item.');
     }
 });
 
-// NOVA ROTA: Criar pedido com múltiplos itens e valor total
 app.post('/orders', async (req, res) => {
-    const { customer_name, items_description, total } = req.body;
+    const { customer_name, item_ids } = req.body;
     const normalizedName = typeof customer_name === 'string' ? customer_name.trim() : '';
-    const normalizedDesc = typeof items_description === 'string' ? items_description.trim() : '';
-    const parsedTotal = Number(total);
+    
+    let ids = [];
+    if (Array.isArray(item_ids)) ids = item_ids.map(Number);
+    else if (item_ids) ids = [Number(item_ids)];
 
-    if (!normalizedName || !normalizedDesc || !Number.isFinite(parsedTotal) || parsedTotal <= 0) {
-        return res.status(400).send('Dados inválidos: adicione pelo menos um item ao carrinho.');
+    if (!normalizedName || ids.length === 0) {
+        return res.status(400).send('Dados inválidos: nome do cliente e marmitas são obrigatórios.');
     }
 
     try {
-        await pool.query(
-            'INSERT INTO orders (customer_name, items_description, total, status) VALUES (?, ?, ?, ?)',
-            [normalizedName, normalizedDesc, parsedTotal, 'Aberto']
+        const [items] = await pool.query('SELECT id, price FROM items WHERE id IN (?)', [ids]);
+        let total = 0;
+        ids.forEach(id => {
+            const item = items.find(i => i.id === id);
+            if (item) total += Number(item.price);
+        });
+
+        const [orderResult] = await pool.query(
+            'INSERT INTO orders (customer_name, total, status) VALUES (?, ?, ?)',
+            [normalizedName, total, 'Aberto']
         );
+        const orderId = orderResult.insertId;
+
+        for (const id of ids) {
+            await pool.query(
+                'INSERT INTO order_items (order_id, item_id, quantity) VALUES (?, ?, ?)',
+                [orderId, id, 1]
+            );
+        }
+
         return res.redirect('/dashboard?toast=Pedido_Registrado');
     } catch (err) {
         console.error(err);
@@ -133,62 +153,78 @@ app.post('/orders', async (req, res) => {
     }
 });
 
-// ROTA ATUALIZADA: Mudar o status (Kanban e Botão de Cancelamento)
-app.post('/orders/:id/status', async (req, res) => {
-    const { status } = req.body;
-    const orderId = req.params.id;
+app.post('/update-order-status', async (req, res) => {
+    const { order_id, new_status } = req.body;
 
-    if (!orderId || !status) {
-        return res.status(400).send('ID do pedido e novo status são obrigatórios.');
+    if (!order_id || !new_status) {
+        return res.status(400).json({ error: 'ID do pedido e novo status são obrigatórios.' });
     }
 
     try {
         await pool.query(
             'UPDATE orders SET status = ? WHERE id = ?',
-            [status, Number(orderId)]
+            [new_status, Number(order_id)]
         );
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ success: true });
+        }
         return res.redirect('/dashboard?toast=Status_Atualizado');
     } catch (err) {
         console.error(err);
-        return res.status(500).send('Erro ao atualizar status do pedido.');
+        return res.status(500).json({ error: 'Erro ao atualizar status do pedido.' });
     }
 });
 
-// ROTA ATUALIZADA: Carregar o Dashboard com faturamento e cardápio
+app.post('/cancel-order', async (req, res) => {
+    const { order_id } = req.body;
+    try {
+        await pool.query('UPDATE orders SET status = ? WHERE id = ?', ['Cancelado', Number(order_id)]);
+        return res.redirect('/dashboard?toast=Pedido_Cancelado');
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Erro ao cancelar pedido.');
+    }
+});
+
 app.get('/dashboard', async (req, res) => {
     try {
-        // 1. Pega os itens para o cardápio expansível
-        const [menuItems] = await pool.query('SELECT * FROM items');
+        const [items] = await pool.query('SELECT * FROM items');
+        const [orders] = await pool.query("SELECT * FROM orders WHERE status != 'Cancelado' ORDER BY created_at DESC");
+        const [orderItems] = await pool.query(`
+            SELECT oi.order_id, i.name AS item_name, i.price 
+            FROM order_items oi 
+            JOIN items i ON oi.item_id = i.id
+        `);
 
-        // 2. Pega todos os pedidos
-        const [orders] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+        orders.forEach(o => {
+            o.itemsList = orderItems.filter(oi => oi.order_id === o.id);
+        });
 
-        // 3. Calcula o Faturamento do Dia (Soma apenas os Entregues de Hoje)
-        const [revenueResult] = await pool.query(`
-            SELECT SUM(total) as faturamentoHoje 
+        const [faturamentoResult] = await pool.query(`
+            SELECT SUM(total) AS faturamento 
             FROM orders 
             WHERE DATE(created_at) = CURDATE() AND status = 'Entregue'
         `);
-        const faturamentoHoje = revenueResult[0].faturamentoHoje || 0;
+        const faturamentoHoje = faturamentoResult[0].faturamento || 0;
 
-        res.render('dashboard', { orders, menuItems, faturamentoHoje });
+        res.render('dashboard', { items, orders, faturamentoHoje });
     } catch (err) {
         console.error(err);
         res.status(500).send("Erro ao carregar o dashboard.");
     }
 });
 
-// ROTA ATUALIZADA: Exportar CSV
 app.get('/admin/export', async (req, res) => {
     try {
-        const [orders] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
+        const [orders] = await pool.query(`
+            SELECT orders.id, orders.customer_name, orders.total, orders.status, orders.created_at
+            FROM orders 
+        `);
 
-        let csv = 'ID,Cliente,Itens,Total,Status,Data\n';
+        let csv = 'ID;Cliente;Valor Total;Status;Data\n';
         orders.forEach(order => {
             const date = new Date(order.created_at).toISOString().split('T')[0];
-            // Precisamos tratar a string dos itens para evitar quebras no Excel
-            const escapedItems = order.items_description.replace(/"/g, '""');
-            csv += `${order.id},"${order.customer_name}","${escapedItems}",${order.total},${order.status},${date}\n`;
+            csv += `${order.id};"${order.customer_name}";${order.total};${order.status};${date}\n`;
         });
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -197,6 +233,31 @@ app.get('/admin/export', async (req, res) => {
     } catch (err) {
         console.error(err);
         return res.status(500).send('Erro ao exportar relatório.');
+    }
+});
+
+app.get('/faturamento', async (req, res) => {
+    try {
+        const [result] = await pool.query(`
+            SELECT SUM(total) AS total_hoje
+            FROM orders 
+            WHERE DATE(created_at) = CURDATE() AND status = 'Entregue'
+        `);
+        
+        const [orders_hoje] = await pool.query(`
+            SELECT orders.id, orders.customer_name, items.name AS item_name, items.price, orders.status, orders.created_at
+            FROM orders 
+            JOIN order_items ON orders.id = order_items.order_id
+            JOIN items ON order_items.item_id = items.id
+            WHERE DATE(orders.created_at) = CURDATE() AND orders.status = 'Entregue'
+            ORDER BY orders.created_at DESC
+        `);
+
+        const total_hoje = result[0].total_hoje || 0;
+        res.render('faturamento', { total_hoje, orders_hoje });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Erro ao carregar faturamento.");
     }
 });
 
@@ -213,8 +274,7 @@ app.get('/health', async (req, res) => {
 });
 
 connectWithRetry().then(() => {
-    // Mantemos a porta 3000 aqui, pois o Docker Compose é quem faz a ponte 8087 -> 3000
     app.listen(3000, () => {
-        console.log('ISADORA RESTAURANT ONLINE NA PORTA INTERNA 3000 (Externa 8087)');
+        console.log('ISADORA RESTAURANT ONLINE NA PORTA 3000');
     });
 });

@@ -10,9 +10,8 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "body-parser": "2.2.2",
-    "ejs": "5.0.2",
-    "express": "4.16.0",
-    "mysql2": "3.22.3"
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "mysql2": "^3.11.0"
   }
 }

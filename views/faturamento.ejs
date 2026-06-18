@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Isadora's Restaurant - Faturamento do Dia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #2b0a3d, #3a0f4f, #4a145f); color: #eee; min-height: 100vh; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: rgba(20, 5, 30, 0.95); padding: 20px 30px; border-radius: 18px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .header h1 { color: #d16ba5; font-weight: 600; }
+        .card { background: rgba(20, 5, 30, 0.95); padding: 25px; border-radius: 18px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); text-align: center; margin-bottom: 30px; }
+        .card h2 { color: #d16ba5; margin-bottom: 10px; }
+        .faturamento-total { font-size: 3rem; color: #a4508b; font-weight: bold; }
+        .table-container { background: rgba(20, 5, 30, 0.95); border-radius: 18px; padding: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #5a2a6c; }
+        th { color: #d16ba5; }
+        .btn { padding: 10px 15px; border-radius: 10px; background: linear-gradient(135deg, #7b2cbf, #a4508b); color: white; text-decoration: none; font-weight: 600; display: inline-block; transition: 0.3s; border: none; cursor: pointer; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+        @media (max-width: 768px) { .header { flex-direction: column; gap: 15px; text-align: center; } body { padding: 15px; } .faturamento-total { font-size: 2rem; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Faturamento do Dia 💰</h1>
+        <div>
+            <a href="/dashboard" class="btn" style="margin-right: 15px;">⬅️ Voltar ao Dashboard</a>
+            <a href="/" style="color: #bbb; text-decoration: none; font-weight: bold;">Sair</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Total Recebido Hoje</h2>
+        <div class="faturamento-total">R$ <%= Number(total_hoje).toFixed(2).replace('.', ',') %></div>
+    </div>
+
+    <div class="table-container">
+        <h2 style="color: #d16ba5; margin-bottom: 15px;">Vendas de Hoje</h2>
+        <% if (orders_hoje.length === 0) { %>
+            <p style="color: #bbb;">Nenhuma venda registrada hoje ainda.</p>
+        <% } else { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pedido #</th>
+                        <th>Cliente</th>
+                        <th>Item</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Horário</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders_hoje.forEach(order => { %>
+                        <tr>
+                            <td><%= order.id %></td>
+                            <td><%= order.customer_name %></td>
+                            <td><%= order.item_name %></td>
+                            <td>R$ <%= Number(order.price).toFixed(2).replace('.', ',') %></td>
+                            <td><%= order.status %></td>
+                            <td><%= new Date(order.created_at).toLocaleTimeString('pt-BR') %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</body>
+</html>

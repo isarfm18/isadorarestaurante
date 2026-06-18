@@ -19,6 +19,7 @@ services:
 
   app:
     image: isarfm18/isadorarestaurante:latest
+    build: .
     container_name: isadorarestaurante-app
     ports:
       - "8087:3000"  

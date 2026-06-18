@@ -7,40 +7,55 @@
     <title>Isadora's Restaurant - Login</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
-<body>
+<body class="login-body">
 
-    <div class="login-container">
-
-        <img src="/images/logo.png" alt="Logo Isadora's Restaurant" class="logo-img">
-        <class="logo-img">
-
-            <div class="restaurant-name">Isadora's Restaurant</div>
-            <div class="subtitle">Acesse sua conta</div>
-
-            <form action="/login" method="POST">
-
-                <div class="input-group">
-                    <label for="username">Usuário</label>
-                    <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+    <div class="login-page-wrapper">
+        <!-- Left Panel: Form -->
+        <div class="login-left-panel">
+            <div class="login-form-card">
+                <div class="login-header">
+                    <img src="/images/logo.png" alt="Logo Isadora's Restaurant" class="login-header-logo">
+                    <h1 class="login-title">Entrar</h1>
+                    <p class="login-subtitle">Acesse sua conta do painel administrativo</p>
                 </div>
 
-                <div class="input-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+                <form action="/login" method="POST" class="login-form">
+                    <div class="input-group">
+                        <label for="username">Usuário</label>
+                        <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="password">Senha</label>
+                        <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+                    </div>
+
+                    <div class="login-options">
+                        <a href="#" class="forgot-password">Esqueceu a senha?</a>
+                    </div>
+
+                    <button type="submit" class="btn-login">Entrar</button>
+                </form>
+
+
+                <div class="login-register-footer">
+                    Não tem uma conta? <a href="#">Cadastre-se grátis</a>
                 </div>
-
-                <button type="submit" class="btn">Entrar</button>
-
-            </form>
-
-            <div class="footer-text">
-                © 2026 Isadora's Restaurant
             </div>
+        </div>
 
+        <!-- Right Panel: Brand Illustration / Logo Showcase -->
+        <div class="login-right-panel">
+            <div class="brand-glow-aura"></div>
+            <div class="brand-showcase-container">
+                <img src="/images/logo.png" alt="Logo Isadora's Restaurant" class="brand-showcase-logo">
+                <div class="brand-showcase-name">Isadora's Restaurant</div>
+                <p class="brand-showcase-desc">O sabor e a qualidade que você merece, direto na sua mesa.</p>
+            </div>
+        </div>
     </div>
 
 </body>
