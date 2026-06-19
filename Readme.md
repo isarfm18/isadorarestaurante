@@ -5,7 +5,7 @@ Este projeto foi desenvolvido com a proposta central de aplicar os pilares da cu
 ###🎯 Proposta do Projeto ###
 O objetivo principal é demonstrar a implementação de práticas modernas de CI/CD (Integração Contínua e Deploy Contínuo). O sistema não apenas gerencia as operações de um restaurante, mas também garante que cada alteração no código passe por rigorosas verificações de segurança e qualidade antes de chegar ao ambiente de produção.
 
-🏗 Estrutura do Projeto (Arquitetura e Organização)
+### 🏗 Estrutura do Projeto (Arquitetura e Organização) ###
 Para manter a organização e seguir as boas práticas de separação de responsabilidades, o projeto foi estruturado da seguinte forma:
 
 1. /.github/workflows/: Contém o coração da nossa automação. Aqui ficam definidos os scripts da pipeline que automatizam o build, lint, análise de segurança e deploy.
