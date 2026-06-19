@@ -4,6 +4,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+app.disable('x-powered-by');
 
 const dbConfig = {
     host: process.env.DB_HOST || 'db',
@@ -165,7 +166,7 @@ app.post('/update-order-status', async (req, res) => {
             'UPDATE orders SET status = ? WHERE id = ?',
             [new_status, Number(order_id)]
         );
-        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        if (req.headers.accept?.includes('application/json')) {
             return res.json({ success: true });
         }
         return res.redirect('/dashboard?toast=Status_Atualizado');
