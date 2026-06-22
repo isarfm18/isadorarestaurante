@@ -12,7 +12,7 @@ jobs:
     container: node:18
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Gerar lockfile temporário
         run: npm install --package-lock-only
@@ -34,7 +34,7 @@ jobs:
     needs: estagio_build
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Gerar lockfile temporário
         run: npm install --package-lock-only
@@ -79,7 +79,7 @@ jobs:
     if: github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/homologacao'
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código para o Sonar
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Preparar arquivo Compose com o identificador
         run: |
