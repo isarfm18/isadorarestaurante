@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: isadorarestaurante-db-local
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: isadoradb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db-data-local:/var/lib/mysql
+    networks:
+      - local-network
+
+  app:
+    image: isarfm18/isadorarestaurante:local
+    build: .
+    container_name: isadorarestaurante-app-local
+    ports:
+      - "8087:3000"  
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306  
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: isadoradb
+    depends_on:
+      - db
+    networks:
+      - local-network
+
+networks:
+  local-network:
+    driver: bridge
+
+volumes:
+  db-data-local:
