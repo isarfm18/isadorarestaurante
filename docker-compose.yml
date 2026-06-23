@@ -1,40 +1,18 @@
 services:
-  db:
-    image: mysql:8.0
-    container_name: isadorarestaurante-db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: isadoradb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-    ports:
-      - "3307:3306"
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   app:
     image: isarfm18/isadorarestaurante:latest
-    build: .
     container_name: isadorarestaurante-app
     ports:
-      - "8087:3000"  
+      - "8087:3000"
     environment:
-      DB_HOST: db
-      DB_PORT: 3306  
-      DB_USER: user
+      DB_HOST: mysql-infra 
+      DB_PORT: 3306
+      DB_USER: root
       DB_PASS: password
-      DB_NAME: isadoradb
-    depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+      DB_NAME: isadoradb   
+    networks:
+      - rede_alunos
+
+networks:
+  rede_alunos:
+    external: true
