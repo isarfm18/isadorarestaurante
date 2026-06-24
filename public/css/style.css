@@ -171,7 +171,7 @@ th { color: var(--primary); }
     .kanban-board, .grid-forms { grid-template-columns: 1fr; }
 }
 
-/* --- ESTILOS DO FATURAMENTO (E DASHBOARD) --- */
+/* --- ESTILOS DO FATURAMENTO NO DASHBOARD --- */
 .faturamento-card {
     background: var(--bg-card);
     padding: 25px;
@@ -204,7 +204,6 @@ th { color: var(--primary); }
     border: 1px solid var(--border);
 }
 
-/* Garante que o container da tabela no faturamento.ejs funcione */
 .table-container {
     background: var(--bg-card);
     border-radius: 18px;
