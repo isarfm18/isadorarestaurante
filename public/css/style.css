@@ -170,3 +170,47 @@ th { color: var(--primary); }
 @media (max-width: 768px) {
     .kanban-board, .grid-forms { grid-template-columns: 1fr; }
 }
+
+/* --- ESTILOS DO FATURAMENTO (E DASHBOARD) --- */
+.faturamento-card {
+    background: var(--bg-card);
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    text-align: center;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
+}
+
+.faturamento-card h2 {
+    font-weight: 300;
+    font-size: 18px;
+    color: var(--text-muted);
+}
+
+.faturamento-card .value {
+    font-size: 3rem;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.btn-export {
+    width: auto;
+    padding: 15px 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
+}
+
+/* Garante que o container da tabela no faturamento.ejs funcione */
+.table-container {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    margin-top: 20px;
+}
