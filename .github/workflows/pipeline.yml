@@ -147,12 +147,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Baixar template do SonarQube para o Trivy
+        run: |
+          curl -sSLo sonarqube.tpl https://github.com/mendhak/trivy-template-output-to-sonarqube/raw/master/sonarqube.tpl
+
       - name: Scan de Segurança com Trivy na sua imagem
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'isarfm18/isadorarestaurante:${{ github.sha }}'
           format: 'template'
-          template: '@/contrib/sonarqube.tpl'
+          template: '@sonarqube.tpl'
           output: 'trivy-report.json'
           severity: 'CRITICAL,HIGH'
 
