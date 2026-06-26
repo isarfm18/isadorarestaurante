@@ -166,8 +166,15 @@ app.post('/update-order-status', async (req, res) => {
             'UPDATE orders SET status = ? WHERE id = ?',
             [new_status, Number(order_id)]
         );
+        const [faturamentoResult] = await pool.query(`
+            SELECT SUM(total) AS faturamento 
+            FROM orders 
+            WHERE DATE(created_at) = CURDATE() AND status = 'Entregue'
+        `);
+        const faturamentoHoje = faturamentoResult[0].faturamento || 0;
+
         if (req.headers.accept?.includes('application/json')) {
-            return res.json({ success: true });
+            return res.json({ success: true, faturamentoHoje });
         }
         return res.redirect('/dashboard?toast=Status_Atualizado');
     } catch (err) {
@@ -218,15 +225,36 @@ app.get('/dashboard', async (req, res) => {
 app.get('/admin/export', async (req, res) => {
     try {
         const [orders] = await pool.query(`
-            SELECT orders.id, orders.customer_name, orders.total, orders.status, orders.created_at
-            FROM orders 
+            SELECT 
+                o.id, 
+                o.customer_name, 
+                o.total, 
+                o.status, 
+                o.created_at,
+                GROUP_CONCAT(i.name SEPARATOR ', ') AS items_list
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            LEFT JOIN items i ON oi.item_id = i.id
+            GROUP BY o.id
+            ORDER BY o.created_at DESC
         `);
 
-        let csv = 'ID;Cliente;Valor Total;Status;Data\n';
+        let csv = 'ID;Cliente;Itens;Valor Total;Status;Data\n';
+        let totalFaturamento = 0;
+
         orders.forEach(order => {
             const date = new Date(order.created_at).toISOString().split('T')[0];
-            csv += `${order.id};"${order.customer_name}";${order.total};${order.status};${date}\n`;
+            const formattedTotal = Number(order.total).toFixed(2);
+            csv += `${order.id};"${order.customer_name}";"${order.items_list || ''}";${formattedTotal};${order.status};${date}\n`;
+            if (order.status === 'Entregue') {
+                totalFaturamento += Number(order.total);
+            }
         });
+
+        // Blank line before total row
+        csv += ';;;;;\n';
+        // Total revenue row
+        csv += `;;Faturamento Total (Entregues);${totalFaturamento.toFixed(2)};;\n`;
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename=vendas.csv');

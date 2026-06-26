@@ -18,13 +18,14 @@
     </div>
 
     <div class="faturamento-card">
-    <div>
-        <h2 style="font-weight: 300; font-size: 18px;">Faturamento Hoje</h2>
-        <div class="value">R$ <%= Number(faturamentoHoje).toFixed(2).replace('.', ',' ) %></div>
-    </div>
-    <a href="/admin/export" class="btn btn-export" style="width: auto; padding: 15px 30px;">
-        📊 Baixar Relatório (CSV)
-    </a>
+        <div>
+            <h2 style="font-weight: 300; font-size: 18px;">Faturamento Hoje</h2>
+            <div class="value">R$ <%= Number(faturamentoHoje).toFixed(2).replace('.', ',' ) %>
+            </div>
+        </div>
+        <a href="/admin/export" class="btn btn-export" style="width: auto; padding: 15px 30px;">
+            📊 Baixar Relatório (CSV)
+        </a>
     </div>
 
     <div class="grid-forms">
@@ -134,14 +135,20 @@
                                             Total: R$ <%= Number(order.total).toFixed(2) %>
                                         </div>
 
-                                         <% if (col.id==='Aberto' || col.id==='Cozinha') { %>
-                                             <form action="/cancel-order" method="POST" style="margin:0;">
-                                                 <input type="hidden" name="order_id" value="<%= order.id %>">
-                                                 <button type="submit" class="btn btn-small btn-danger"
-                                                     onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌
-                                                     Cancelar</button>
-                                             </form>
-                                             <% } %>
+                                        <div class="card-actions"
+                                            style="display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-top: 10px;">
+                                            <form action="/cancel-order" method="POST" style="margin: 0; flex: 1;"
+                                                class="cancel-form">
+                                                <input type="hidden" name="order_id" value="<%= order.id %>">
+                                                <button type="submit" class="btn btn-small btn-danger"
+                                                    style="width: 100%; font-size: 12px; padding: 8px 10px;"
+                                                    onclick="return confirm('Tem certeza que deseja cancelar este pedido?')">❌
+                                                    Cancelar</button>
+                                            </form>
+                                            <button type="button" class="btn btn-small btn-success btn-move-next"
+                                                onclick="moveNext('<%= order.id %>')"
+                                                style="width: auto; padding: 8px 12px; margin-top: 0; font-size: 12px;">➡️</button>
+                                        </div>
                                     </div>
                                     <% }) %>
                                         <% } %>
@@ -177,13 +184,13 @@
             row.style.gap = '10px';
             row.style.alignItems = 'center';
             row.style.marginBottom = '15px';
-            
+
             const originalSelect = document.querySelector('.item-row select');
             const select = originalSelect.cloneNode(true);
             select.value = "";
             select.style.marginBottom = "0";
             select.style.flex = "1";
-            
+
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'btn btn-danger btn-small';
@@ -191,10 +198,10 @@
             removeBtn.style.width = 'auto';
             removeBtn.style.padding = '12px 15px';
             removeBtn.textContent = '❌';
-            removeBtn.onclick = function() {
+            removeBtn.onclick = function () {
                 row.remove();
             };
-            
+
             row.appendChild(select);
             row.appendChild(removeBtn);
             container.appendChild(row);
@@ -220,10 +227,24 @@
             var newStatus = targetCol.id;
             var orderId = data.split('-')[1];
 
+            var sourceCol = card.parentElement;
             targetCol.appendChild(card);
 
             const emptyMsgs = targetCol.querySelectorAll('.empty-msg');
             emptyMsgs.forEach(m => m.remove());
+
+            // If source column becomes empty, show empty message
+            if (sourceCol && sourceCol.querySelectorAll('.kanban-card').length === 0) {
+                if (!sourceCol.querySelector('.empty-msg')) {
+                    const emptyP = document.createElement('p');
+                    emptyP.className = 'empty-msg';
+                    emptyP.style.color = '#777';
+                    emptyP.style.fontSize = '13px';
+                    emptyP.style.textAlign = 'center';
+                    emptyP.textContent = 'Vazio';
+                    sourceCol.appendChild(emptyP);
+                }
+            }
 
             fetch('/update-order-status', {
                 method: 'POST',
@@ -237,12 +258,73 @@
                 .then(data => {
                     if (data.success) {
                         showToast('Status Atualizado');
+                        if (data.faturamentoHoje !== undefined) {
+                            document.querySelector('.faturamento-card .value').textContent =
+                                'R$ ' + Number(data.faturamentoHoje).toFixed(2).replace('.', ',');
+                        }
                     }
                 })
                 .catch(err => {
                     console.error(err);
                     showToast('Erro ao atualizar!');
                 });
+        }
+
+        function moveNext(orderId) {
+            const card = document.getElementById('order-' + orderId);
+            if (!card) return;
+            const currentCol = card.parentElement;
+            const currentStatus = currentCol.id;
+
+            const statuses = ['Aberto', 'Cozinha', 'Entrega', 'Entregue'];
+            const currentIndex = statuses.indexOf(currentStatus);
+
+            if (currentIndex !== -1 && currentIndex < statuses.length - 1) {
+                const nextStatus = statuses[currentIndex + 1];
+                const nextCol = document.getElementById(nextStatus);
+                if (!nextCol) return;
+
+                nextCol.appendChild(card);
+
+                const emptyMsgs = nextCol.querySelectorAll('.empty-msg');
+                emptyMsgs.forEach(m => m.remove());
+
+                // If current column becomes empty, show empty message
+                if (currentCol.querySelectorAll('.kanban-card').length === 0) {
+                    if (!currentCol.querySelector('.empty-msg')) {
+                        const emptyP = document.createElement('p');
+                        emptyP.className = 'empty-msg';
+                        emptyP.style.color = '#777';
+                        emptyP.style.fontSize = '13px';
+                        emptyP.style.textAlign = 'center';
+                        emptyP.textContent = 'Vazio';
+                        currentCol.appendChild(emptyP);
+                    }
+                }
+
+                fetch('/update-order-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ order_id: orderId, new_status: nextStatus })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Status Atualizado');
+                            if (data.faturamentoHoje !== undefined) {
+                                document.querySelector('.faturamento-card .value').textContent =
+                                    'R$ ' + Number(data.faturamentoHoje).toFixed(2).replace('.', ',');
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showToast('Erro ao atualizar!');
+                    });
+            }
         }
 
         document.querySelectorAll('.kanban-col').forEach(col => {
