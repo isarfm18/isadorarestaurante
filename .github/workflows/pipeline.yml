@@ -167,7 +167,12 @@ jobs:
           SONAR_HOST_URL: "https://devsecops.dcotech.com.br"
         with:
           args: >
+            -Dsonar.projectKey=isadorarestaurante
+            -Dsonar.projectName=isadorarestaurante
             -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.sources=.
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.exclusions=node_modules/**,.git/**,.github/**,coverage/**,dist/**
             -Dsonar.externalIssuesReportPaths=trivy-report.json
 
   job_deploy_staging:
