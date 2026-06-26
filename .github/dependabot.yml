@@ -7,9 +7,6 @@ updates:
       time: "09:00"
       timezone: "Etc/UTC"
     open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "security"
     commit-message:
       prefix: "deps"
 
@@ -20,6 +17,4 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Etc/UTC"
-    labels:
-      - "ci"
-      - "dependencies"
+
