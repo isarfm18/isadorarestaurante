@@ -178,8 +178,8 @@ jobs:
         run: |
           cp docker-compose.yml docker-compose-isadora.yml
 
-      - name: Copiar Compose e init.sql para a EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Copiar Compose e init.sql para a EC2 (via SCP)
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
