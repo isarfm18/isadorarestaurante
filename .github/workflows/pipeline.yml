@@ -142,22 +142,17 @@ jobs:
     if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do código
+      - name: Checkout do código para o Sonar
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Baixar template do SonarQube para o Trivy
-        run: |
-          curl -sSLo sonarqube.tpl https://github.com/mendhak/trivy-template-output-to-sonarqube/raw/master/sonarqube.tpl
-
-      - name: Scan de Segurança com Trivy na sua imagem
+      - name: Scan de Segurança com Trivy (SARIF)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'isarfm18/isadorarestaurante:${{ github.sha }}'
-          format: 'template'
-          template: '@sonarqube.tpl'
-          output: 'trivy-report.json'
+          format: 'sarif'
+          output: 'trivy-report.sarif'
           severity: 'CRITICAL,HIGH'
 
       - name: Criar sonar-project.properties dinâmico
@@ -169,7 +164,7 @@ jobs:
           echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
           echo "sonar.exclusions=node_modules/**,.git/**,.github/**,coverage/**,dist/**" >> sonar-project.properties
 
-      - name: SonarQube lendo o relatório do Trivy
+      - name: SonarQube lendo o Trivy (SARIF)
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.TOKEN_SONAR }}
@@ -177,7 +172,7 @@ jobs:
         with:
           args: >
             -Dsonar.branch.name=${{ github.ref_name }}
-            -Dsonar.externalIssuesReportPaths=trivy-report.json
+            -Dsonar.sarifReportPaths=trivy-report.sarif
 
   job_deploy_staging:
     needs: job_trivy_sonar
