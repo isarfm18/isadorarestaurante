@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS isadoradb;
+USE isadoradb; 
 
 DROP TABLE IF EXISTS users;
 

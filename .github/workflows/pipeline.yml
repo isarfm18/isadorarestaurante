@@ -1,4 +1,4 @@
-name: integracao continua e deploy producao
+name: integracao continua e deploy
 
 on:
   push:
@@ -9,10 +9,15 @@ on:
 jobs:
   estagio_build:
     runs-on: ubuntu-latest
-    container: node:18
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          package-manager-cache: false
 
       - name: Gerar lockfile temporário
         run: npm install --package-lock-only
@@ -30,11 +35,16 @@ jobs:
 
   estagio_lint:
     runs-on: ubuntu-latest
-    container: node:18
     needs: estagio_build
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          package-manager-cache: false
 
       - name: Gerar lockfile temporário
         run: npm install --package-lock-only
@@ -75,38 +85,39 @@ jobs:
 
   job_sonar:
     needs: estagio_lint
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/homologacao'
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Criar sonar-project.properties
+      - name: Criar sonar-project.properties dinâmico
         run: |
-          cat > sonar-project.properties <<'EOF'
-          sonar.projectKey=isadorarestaurante
-          sonar.projectName=isadorarestaurante
-          sonar.sources=.
-          sonar.inclusions=**/*.js
-          sonar.sourceEncoding=UTF-8
-          sonar.exclusions=node_modules/**,.git/**,.github/**,coverage/**,dist/**
-          EOF
+          echo "sonar.projectKey=isadorarestaurante" > sonar-project.properties
+          echo "sonar.projectName=isadorarestaurante" >> sonar-project.properties
+          echo "sonar.branch.name=${{ github.ref_name }}" >> sonar-project.properties
+          echo "sonar.sources=." >> sonar-project.properties
+          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
+          echo "sonar.exclusions=node_modules/**,.git/**,.github/**,coverage/**,dist/**" >> sonar-project.properties
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.TOKEN_SONAR }}
-          SONAR_HOST_URL: "https://devsecops.dcotech.com.br"
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.branch.name=${{ github.ref_name }}
 
   job_release_docker:
     needs: estagio_lint
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -117,60 +128,53 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build e Push da Imagem
+      - name: Build e Push da Imagem pro seu Hub
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/isadorarestaurante:latest
-            ${{ secrets.DOCKER_USERNAME }}/isadorarestaurante:${{ github.sha }}
+            isarfm18/isadorarestaurante:${{ github.ref_name }}
+            isarfm18/isadorarestaurante:${{ github.sha }}
 
   job_trivy_sonar:
     needs: job_release_docker
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout do código para o Sonar
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Scan de Segurança com Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ secrets.DOCKER_USERNAME }}/isadorarestaurante:${{ github.sha }}'
-          format: 'template'
-          template: '@/contrib/sonarqube.tpl'
-          output: 'trivy-report.json'
-
-      - name: Criar sonar-project.properties com Trivy external issues
-        run: |
-          cat > sonar-project.properties <<'EOF'
-          sonar.projectKey=isadorarestaurante
-          sonar.projectName=isadorarestaurante
-          sonar.sources=.
-          sonar.inclusions=**/*.js
-          sonar.sourceEncoding=UTF-8
-          sonar.exclusions=node_modules/**,.git/**,.github/**,coverage/**,dist/**
-          sonar.externalIssuesReportPaths=trivy-report.json
-          EOF
-
-      - name: SonarQube lendo o Trivy (External Issues)
-        uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.TOKEN_SONAR }}
-          SONAR_HOST_URL: "https://devsecops.dcotech.com.br"
-
-  job_deploy_ec2:
-    needs: job_trivy_sonar
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Preparar arquivo Compose com o identificador
+      - name: Scan de Segurança com Trivy na sua imagem
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'isarfm18/isadorarestaurante:${{ github.sha }}'
+          format: 'template'
+          template: '@/contrib/sonarqube.tpl'
+          output: 'trivy-report.json'
+          severity: 'CRITICAL,HIGH'
+
+      - name: SonarQube lendo o relatório do Trivy
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.externalIssuesReportPaths=trivy-report.json
+
+  job_deploy_staging:
+    needs: job_trivy_sonar
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Preparar arquivo Compose com o nome Isadora
         run: |
           cp docker-compose.yml docker-compose-isadora.yml
 
@@ -192,13 +196,11 @@ jobs:
           script: |
             cd /home/${{ secrets.EC2_USER }}/isadorarestaurante
 
-            echo "⏳ Executando init.sql no container mysql-infra..."
-            sudo docker exec -i mysql-infra \
-              mysql -u root -ppassword < init.sql
-
-            echo "✅ init.sql executado com sucesso!"
+           
+            echo "⏳ Injetando tabelas no banco mysql-infra..."
+            sudo docker exec -i mysql-infra mysql -u root -ppassword < init.sql
 
             sudo docker compose -f docker-compose-isadora.yml pull
             sudo docker compose -f docker-compose-isadora.yml up -d
 
-            echo "✅ Deploy finalizado com sucesso na EC2!"
+            echo "✅ Deploy concluído com sucesso!"
